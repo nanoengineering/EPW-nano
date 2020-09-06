@@ -1,5 +1,3 @@
-# EPW-nano
-
 # First-principles simulation of electron transport and thermoelectric property of materials including electron-phonon scattering, defect scattering, and phonon drag
 
 Jiawei Zhou, Te-Huan Liu, Qichen Song, Qian Xu, Zhiwei Ding, Bolin Liao, and Gang Chen
