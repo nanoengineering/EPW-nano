@@ -1,0 +1,15 @@
+#! /bin/bash
+
+test -d "$1" || exit 1
+test -r $1/OPTIONS || exit 0
+
+LINKED=
+for dir ; do
+LINKED="$LINKED $(IDE/getoption LINK < $1/OPTIONS)"
+done
+for dir in $LINKED ; do
+  echo "$dir"
+done
+
+
+

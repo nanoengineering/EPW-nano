@@ -1,0 +1,133 @@
+PACKAGE Input/Output Tool Kit
+VERSION 1.2.0
+AUTHORS Giovanni Bussi
+LICENSE GNU LIBRARY GENERAL PUBLIC LICENSE
+
+CONTACT
+gbussi@unimore.it or gbussi@phys.chem.ethz.ch
+
+DESCRIPTION
+This kit is a Fortran90 library intended to provide an easy access to tagged
+files formatted using some specific rule.
+A tagged file is a file containing tags and data.
+Tagged files can be textual, in which case a XML-like format is used,
+or binary, in which case a special format is used.
+Note that this is not an XML parser, but it can be used as a writer/parser
+for a limited subset of XML language.
+
+STRONG POINTS
+* This library is very simple to use (in author's opinion).
+* The interaction with files is obtained with an interface some-what
+  similar to standard Fortran I/O.
+  As an example, files are accessed through Fortran units, with the
+  consequences that the library can be easily integrated with other
+  formatting tools.
+* A well-written tagged file can be translated form binary to textual
+  or vice-versa using a simple translation tool independent from the file
+  structure.
+* The library handles directly any intrinsic Fortran datatype.
+  Kind conversions are performed transparently.
+* The library handles data of any rank, the maximum rank is configurable.
+* Textual files conform to XML standard, and can be browsed using an XML browser.
+* The library is very easy to compile and to integrate into other environments:
+  the distribution consists in fortran files plus a configuration file.
+* Access is fast. No overhead should be expected in writing/reading binary files
+  with respect to usual fortran I/O. However, this is not true if one stores
+  a large number of very small data.
+* Files are small. Waste of space is related to tag size, so that if
+  one stores large data the waste is usually negligible.
+* Aspect of data in textual files is controllable with a format string.
+  Then the library can be used also for log files.
+* Objects and complex structures can be easily represented.
+* Multiple-files can be linked together.
+
+WEAK POINTS
+* This library cannot read standard XML.
+  Main lacks are listed here
+  - contents are processed only if they are written as data, using the proper format
+  - DTD are not processed at all
+  - ...
+* The binary format is not compatible with any standard format.
+* This library has a serial access. If data are written in a given order
+  and read in a different order, performance overheads are expected.
+* This library does not provide parallel I/O functionalities.
+* There is presently no feature to list the tags in a file. To found a tag, its
+  name has to be known.
+
+DOCUMENTATION
+A short reference manual can be found in doc/
+
+CONFIGURATION FILES
+The library is configured through C preprocessor directives.
+Preset configurations can be found in include/iotk_config.h file.
+This file can be modified to satisfy user's needs or to add new
+machines.
+Note that in the iotk_config.h file there are definitions needed
+as workaround for buggy compilers.
+Smaller number of kinds and smaller maxrank mean shorter
+compilation time.
+An optimal iotk_config.h file can also be generated using the
+script ./configure. This script is automatically invoked by the S3DE
+configure script.
+Moreover, if you want to distribute the code and you would like
+also smaller source files, you can edit the file
+include/iotk_config.sh and modify the number of available kinds
+(valid for each type except characters) and the maximum
+rank. After editing this file, run "make update".
+
+PORTABILITY
+The library is written in standard fortran 90, with no extensions.
+It has been tested on g95 (latest version), ifort (8.1),
+pgf90, xlf90 (9.1), mips f90, nag f90. For some of these compilers
+workarounds are needed. The list of workarounds can be generated
+with tools/auto_config.
+Please signal other portability issues.
+
+IN-PLACE COMPILATION
+The library is part of the S3 Development Environment.
+To compile the library in place simple type 'make all'.
+The file ../CONFIG/make.sys has to be adapted to the actual machine.
+
+EXPORTING THE LIBRARY
+The source files are all written in standard f90 with cpp directives/macros.
+Then, you need a C preprocessor and a f90 compiler.
+Be sure that your C preprocessor is able to preprocess Fortran files
+and that it expands macros.
+Since the number of source files in the src directory
+is quite high, it is generally convenient to pack them.
+This can be done automatically typing 'make export'
+(equivalently, running tools/export from the iotk home directory).
+The needed files are created in tmp/export.
+The correct order for compilation is alphabetic, usually obtainable as:
+f90 iotk_*.f90
+
+CONTRIBUTING
+The easiest way to contribute is to report bugs (see BUG REPORTING).
+Also discussions about the programmer interface or the file formats
+are welcome.
+Finally, one can directly edit the library. In this case,
+he should keep in account the fact that the .f90 files are obtained
+from smaller .spp files using the sprep preprocessor.
+If you modify the .spp files, run "make update".
+
+BUG REPORTING
+When reporting a bug, include everything necessary to reproduce it, plus:
+- version number
+- date, if taken from CVS
+- if an error is issued, the complete error message
+If possible, produce a small testcase which will be eventually
+included in the test suite.
+
+BINARY FILES
+Binary files cannot be edited manually.
+However, opening them with vi (at least with vim) shows their
+tag structure. The following command can be used to extract
+all the tags from a binary files
+sed -n '/^ *<[^<>]*>$/p' filename
+Note that in some case also non-tag data are extracted.
+
+ACKNOWLEDGEMENTS
+Andrea Ferretti, for useful discussions and testing
+Carlo Cavazzoni, for useful discussions
+Paolo Giannozzi, Lorenzo Paulatto, bugs reporting and contributions
+

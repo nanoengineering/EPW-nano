@@ -1,0 +1,150 @@
+#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"
+
+#
+# Usage:   check_gui module
+#          ( module = pw, ph, pp, projwfc, atomic, or d3 )
+#
+# Purpose: check the PWgui modules wrt coprresponding INPUT_*.def
+#          files and create a PWgui help files.
+#
+
+if { ! [info exists env(PWGUI)] } {
+	# try with: ../GUI/PWgui
+	set env(PWGUI) [file normalize [file join .. GUI PWgui]]
+}
+if { ! [info exists env(GUIB)] } {
+	# try with: ../GUI/Guib
+	set env(GUIB) [file normalize [file join .. GUI Guib]]
+}
+
+proc Usage {} {
+    global argv0
+
+    puts stderr [subst {
+  Usage: $argv0 module
+  
+  Where module is one of:
+  
+  \tpw
+  \tneb
+  \tph 
+  \tpp 
+  \tprojwfc
+  \tbands
+  \tdos
+  \tatomic
+  \td3
+    }]
+    exit 1
+}
+
+if { $argc != 1 } {
+    Usage
+}
+
+set module [lindex $argv 0]
+
+set basedir [file normalize [file dirname [info script]]]
+set topdir  [file normalize [file join $basedir ..]]
+
+# load helpdoc
+
+set helpdocdir [file join $basedir helpdoc.d]
+source [file join $helpdocdir helpdoc.tcl]
+
+
+# load Guib
+
+set guibdir [file join $topdir GUI Guib]
+lappend auto_path $guibdir
+package require Guib
+wm withdraw .
+
+
+# PWgui's modules dir 
+
+set pwguidir  [file join $topdir GUI PWgui]
+set moduledir [file join $pwguidir modules]
+source [file join $pwguidir init.tcl]
+
+
+# map from module to def- and module-file
+
+set mappings {
+    pw        PW/Doc     INPUT_PW 
+    neb       NEB/Doc    INPUT_NEB
+    ph        PHonon/Doc INPUT_PH
+    pp        PP/Doc     INPUT_PP
+    projwfc   PP/Doc     INPUT_PROJWFC
+    bands     PP/Doc     INPUT_BANDS
+    dos       PP/Doc     INPUT_DOS
+    atomic    atomic/Doc INPUT_LD1
+    d3        PHonon/Doc INPUT_D3
+}
+
+foreach {mod subdir def_prefix} $mappings {
+    if { $mod == $module } {
+	set deffile    [file join $topdir $subdir $def_prefix.def]
+	set modulefile [file join  $moduledir $mod $mod.tcl]
+
+	# compile the $deffile
+	cd [file join $topdir $subdir]
+	catch {exec make $def_prefix.html}
+	cd $basedir
+	
+	# output info
+	puts "Checking PWgui module: $mod"
+	puts "    *     module file: $modulefile"
+	puts "    * definition file: $deffile"
+
+	# the current $mod-help.tcl file will interfere the process, rename it:	
+	
+	if { [file exists [file join $moduledir $mod $mod-help.tcl]] } {
+	    puts "Renaming the current $mod-help.tcl file to $mod-help.tcl.bak"
+	    file rename -force [file join $moduledir $mod $mod-help.tcl] [file join $moduledir $mod $mod-help.tcl.bak]
+	}
+
+	# make a black $mod-help.tcl file
+
+	close [open [file join $moduledir $mod $mod-help.tcl] w]
+    } 
+}
+
+if { ! [info exists deffile] } {
+    Usage
+}
+
+# read & load both the def & module file
+
+set def [::helpdoc::def_loadDef $deffile]
+set obj [::guib::loadModule $modulefile]; $obj storeModuleItems
+
+
+#
+# check DEF vs. MODULE file
+#
+
+::helpdoc::checkGui_def_vs_module
+
+#
+# check MODULE vs. DEF file
+#
+
+::helpdoc::checkGui_module_vs_def
+
+#
+# Create a HELP file
+#
+
+::helpdoc::checkGui_makeHelpFile $deffile $modulefile
+
+if { [file exists [file join $moduledir $module $module-help.tcl.bak]] } {
+    puts "Renaming back the $module-help.tcl.bak file to $module-help.tcl"
+    file rename -force [file join $moduledir $module $module-help.tcl.bak] [file join $moduledir $module $module-help.tcl]
+}
+
+# ok, we are done; since we loaded Tk, we need an explicit exit !!!
+
+exit 0

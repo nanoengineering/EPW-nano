@@ -1,0 +1,126 @@
+PbTe-EPW
+! for defect: Bi_Pb.n2.relaxed
+&inputepw
+  prefix      = 'PbTe'
+  outdir      = '/scratch/username/search/PbTe/epw_test/'
+  dvscf_dir   = 'dvscf_dyn/'
+  amass(1)    = 207.2
+  amass(2)    = 127.6
+  iverbosity  =  0
+
+  nq1             =  6
+  nq2             =  6
+  nq3             =  6
+  nqf1            =  60
+  nqf2            =  60
+  nqf3            =  60
+  nk1             =  6
+  nk2             =  6
+  nk3             =  6
+  nkf1            =  120
+  nkf2            =  120
+  nkf3            =  120
+
+  elph            = .true.
+  eig_read        = .false.
+  kmaps           = .false.
+  epbwrite        = .true.
+  epbread         = .false.
+  epwwrite        = .true.
+  epwread         = .false.
+  wannierize      = .true.
+  edos_read       = .false.
+
+  etf_mem         = .true.
+  parallel_k      = .true.
+  parallel_q      = .false.
+  elinterp        = .true.
+  phinterp        = .true.
+  tshuffle2       = .true.
+  tphases         = .false.
+  elecselfen      = .true.
+  phonselfen      = .false.
+  a2f             = .false.
+
+  ! Wannierization
+  nbndsub         =  16
+  spinors         = .true.
+  num_cg_steps    =  20
+  trial_step      =  0.5
+  guiding_centres = .true.
+  num_iter        =  20000
+  dis_num_iter    =  10000
+  dis_win_max     =  17.0
+  dis_win_min     = -9.5
+  dis_froz_max    =  5.35
+  dis_froz_min    = -9.5
+  proj(1)      = 'f=0.00,0.00,0.00 : l=-3'
+  proj(2)      = 'f=0.50,0.50,0.50 : l=-3'
+
+  nbndskip        =  0
+  ifc_read        = .false.
+  ph_read         = .false.
+  ephl_read       = .false.
+  nkfdos1         =  100
+  nkfdos2         =  100
+  nkfdos3         =  100
+
+  save_m_mat  = .false.
+  save_m_matw = .true.
+!  save_m_ph   = .false.
+!  save_t_el   = .true.
+  vme             = .false.
+
+  ! transport
+  bte         =  0
+  bte_o       = .true.
+  egap_rbm        =  0.316
+  fsthick         =  0.2
+!  degaussw        =  0.01
+
+  eptemp(1)       =  300.0
+  epdope(1)   = -2.0d18
+  epdope(2)   = -4.0d18
+  epdope(3)   = -1.0d19
+  epdope(4)   = -2.0d19
+  epdope(5)   = -4.0d19
+  epdope(6)   = -6.0d19
+  epdope(7)   = -1.0d20
+
+  lpolar          = .true.
+  asr_eph         = .true.
+  screen_polar    = .false.
+  smearing    = 'tetra'
+  vg_el       = 'linear'
+  vg_ph       = 'matrix'
+  nptype      = 'n'
+
+  ! impurity
+  eimp_mode   = 8
+  eimp_ls_mode= 0
+  defectname  = Bi_Pb.n2.relaxed
+  imp_charge  = 1.0
+  dielec      = 104.1
+  dvimpsr     = .false.
+  dvimpq      = .false.
+
+/
+&input_explore
+/
+ 16 cartesian
+    0.0000000   0.0000000   0.0000000   0.0092593 
+   -0.1666667   0.1666667  -0.1666667   0.0370370 
+   -0.3333333   0.3333333  -0.3333333   0.0370370 
+    0.5000000  -0.5000000   0.5000000   0.0370370 
+    0.0000000   0.3333333   0.0000000   0.0555556 
+   -0.1666667   0.5000000  -0.1666667   0.1111111 
+    0.6666667  -0.3333333   0.6666667   0.1111111 
+    0.5000000  -0.1666667   0.5000000   0.1111111 
+    0.3333333   0.0000000   0.3333333   0.1111111 
+    0.0000000   0.6666667   0.0000000   0.0555556 
+    0.8333333  -0.1666667   0.8333333   0.1111111 
+    0.6666667   0.0000000   0.6666667   0.1111111 
+    0.0000000  -1.0000000   0.0000000   0.0277778 
+    0.6666667  -0.3333333   1.0000000   0.2222222 
+    0.5000000  -0.1666667   0.8333333   0.2222222 
+   -0.3333333  -1.0000000   0.0000000   0.1111111

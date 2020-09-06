@@ -1,0 +1,35 @@
+&control
+   calculation='scf',
+   prefix='PbTe',
+   pseudo_dir = '/home/username/pseudo',
+   outdir='/scratch/username/search/PbTe/epw',
+!   tstress=.true.
+!   tprnfor=.true.
+/
+&system    
+   ibrav = 2 ,
+   nat=  2 , 
+   ntyp = 2 , 
+   celldm(1) = 11.8873, 
+   ecutwfc = 75
+   nbnd = 24
+   noncolin = .true.
+   lspinorb = .true.
+!   occupations = 'smearing'
+!   smearing='gauss'
+!   degauss = 0.005
+/
+&electrons
+   diagonalization = 'david'
+   mixing_beta = 0.7
+   conv_thr =  1.0d-14
+   electron_maxstep = 300
+/
+ATOMIC_SPECIES
+ Pb 207.2 Pb.rel-pz-n-nc.UPF
+ Te 127.6 Te.rel-pz-n-nc.UPF
+ATOMIC_POSITIONS crystal
+ Pb 0.00 0.00 0.00
+ Te 0.50 0.50 0.50
+K_POINTS AUTOMATIC
+ 12 12 12 0 0 0

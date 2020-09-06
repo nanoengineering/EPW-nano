@@ -1,0 +1,123 @@
+EPW Si
+&inputepw
+ prefix          = 'Si'
+! outdir          = 'output/'
+ outdir          = '/scratch/username/search/Si/epw-test/'
+ dvscf_dir       = 'dvscf_dyn'
+ amass(1)        =  28.0855
+ iverbosity      =  0
+
+ nq1             =  6
+ nq2             =  6
+ nq3             =  6
+ nqf1            =  100
+ nqf2            =  100
+ nqf3            =  100
+ nk1             =  12
+ nk2             =  12
+ nk3             =  12
+ nkf1            =  100
+ nkf2            =  100
+ nkf3            =  100
+
+ elph            = .true.
+ eig_read        = .false.
+ kmaps           = .true.
+ epbwrite        = .false.
+ epbread         = .true.
+ epwwrite        = .true.
+ epwread         = .false.
+ wannierize      = .false.
+ edos_read       = .true.
+
+ etf_mem         = .true.
+ parallel_k      = .true.
+ parallel_q      = .false.
+ elinterp        = .true.
+ phinterp        = .true.
+ tshuffle2       = .true.
+ tphases         = .false.
+ elecselfen      = .true.
+ phonselfen      = .false.
+ a2f             = .false.
+
+ mixing          = 0.33
+ dis_win_min     = -20.0
+ dis_win_max     =  17.7
+ dis_froz_min    = -20.0
+ dis_froz_max    =  6.4
+ nbndsub         =  8
+ spinors         = .false.
+ num_cg_steps    =  20
+ trial_step      =  0.5
+ guiding_centres = .true.
+ num_iter        =  5000
+ dis_num_iter    =  1500
+ proj(1)         = 'f=0.0000,0.0000,0.0000:l=-3'
+ proj(2)         = 'f=0.2500,0.2500,0.2500:l=-3'
+ wdata(1)        = 'num_print_cycles = 200'
+
+ nbndskip        =  0
+ ifc_read        = .false.
+ ph_read         = .false.
+ ephl_read       = .false.
+ nkfdos1         =  240
+ nkfdos2         =  240
+ nkfdos3         =  240
+
+ save_m_mat      = .false.
+ save_m_matw     = .true.
+ save_m_ph       = .false.
+ save_t_el       = .true.
+ vme             = .false.
+
+ bte             =  0      ! phdrag: bte = 1 with iter <= 6
+ bte_o           = .true.
+ egap_rbm        =  1.12
+ fsthick         =  0.2
+ degaussw        =  0.5
+
+! phdrag          = .true.
+! shengbte_read   = .true.
+! phwmax          = 30     ! phonon frequency
+! phkmax          = 0.2     ! phonon wavevector
+! epthick         = 0.2
+
+! eimp_mode   = 2
+! imp_charge  = 1
+! dielec      = 13.215657199
+
+ eptemp(1)       =  300.0
+ epdope(1)       = -1.0d16
+ epdope(2)       = -1.0d17
+ epdope(3)       = -1.0d18
+ epdope(4)       = -1.0d19
+ epdope(5)       = -1.0d20
+
+ lpolar          = .false.
+ asr_eph         = .true.
+ smearing        = 'tetra'
+ vg_el           = 'matrix'
+ vg_ph           = 'matrix'
+ nptype          = 'n'
+
+/
+&input_explore
+/
+ 16 cartesian
+  0.000000000000000E+00   0.000000000000000E+00   0.000000000000000E+00  1.0
+ -0.166666666666667E+00   0.166666666666667E+00  -0.166666666666667E+00  1.0
+ -0.333333333333333E+00   0.333333333333333E+00  -0.333333333333333E+00  1.0
+  0.500000000000000E+00  -0.500000000000000E+00   0.500000000000000E+00  1.0
+  0.000000000000000E+00   0.333333333333333E+00   0.000000000000000E+00  1.0
+ -0.166666666666667E+00   0.500000000000000E+00  -0.166666666666667E+00  1.0
+  0.666666666666667E+00  -0.333333333333333E+00   0.666666666666667E+00  1.0
+  0.500000000000000E+00  -0.166666666666667E+00   0.500000000000000E+00  1.0
+  0.333333333333333E+00   0.277555756156289E-16   0.333333333333333E+00  1.0
+  0.000000000000000E+00   0.666666666666667E+00   0.000000000000000E+00  1.0
+  0.833333333333333E+00  -0.166666666666667E+00   0.833333333333333E+00  1.0
+  0.666666666666667E+00  -0.555111512312578E-16   0.666666666666667E+00  1.0
+  0.000000000000000E+00  -0.100000000000000E+01   0.000000000000000E+00  1.0
+  0.666666666666667E+00  -0.333333333333333E+00   0.100000000000000E+01  1.0
+  0.500000000000000E+00  -0.166666666666667E+00   0.833333333333333E+00  1.0
+ -0.333333333333333E+00  -0.100000000000000E+01   0.000000000000000E+00  1.0

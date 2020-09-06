@@ -1,0 +1,7 @@
+#! /bin/sh
+
+# Writes in output the list of command-line arguments reversed.
+
+echo $* | tr " " "\n" | sed '1!G;h;$!d' | tr "\n" " "
+echo
+

@@ -1,0 +1,54 @@
+       
+       MIT NANOENGINEERING GROUP
+       T.H. LIU and J. ZHOU
+       ELECTRON-PHONON BOLTZMANN TRANSPORT EQUATION SOLVER (v5.0)     
+       
+       
+       k-mesh:  100 *  100 *  100  =      1000000 points
+       q-mesh:  100 *  100 *  100  =      1000000 points
+
+       Dimension   =     3
+       Band (e)    =     5  to  6
+       Mode (ph)   =     6
+       Bandgap     =     6.2682  to    7.3882 [eV]
+       fsthick     =     0.2000  /     0.2642 [eV]
+
+       n_intr      =     1.1490E+10 [cm^-3] at T =  300.0 [K]
+
+       Smearing                 =    tetra
+       Mixing ratio             =   0.3300
+       GW band structure        =        F
+       RBM bandgap              =   1.1200 [eV]
+       Spin-orbital interaction =        F
+
+       Polar interaction        =        F
+       Polar e-LO phonon considered?  =        T
+       Screening of polar scattering considered?  =        F
+       
+       Use direct interpolation for ep-matrix?   :        F
+       ASR to ep-matrix (eph)   =        T
+
+       n/p-type semiconductor   =        n    
+
+       e-imp scattering mode    =        0
+           (0: none; 1: Brooks-Herring relaxation time; 2: B-H momentum relaxation time)
+       e-imp-ls mode    =        0
+           (0: both long and short range; 1: only long range; 
+            2: only short range;          3: none )
+       
+
+       =========================================================================================================================
+          T(K)  Fermi level Doping(cm^-3)  n_carr     n_charge    Mobility      cond      Seebeck        PF         PF*T    thermal cond
+         300.0      7.1846    -1.00E+16    1.00E+16   -1.00E+16    1.52E+03    2.44E+02   -8.24E+02    1.65E+00    4.96E-02    7.44E-04
+         300.0      7.2441    -1.00E+17    1.00E+17   -1.00E+17    1.52E+03    2.44E+03   -6.25E+02    9.52E+00    2.86E-01    7.44E-03
+         300.0      7.3040    -1.00E+18    1.00E+18   -1.00E+18    1.50E+03    2.41E+04   -4.27E+02    4.40E+01    1.32E+00    7.41E-02
+         300.0      7.3664    -1.00E+19    1.00E+19   -1.00E+19    1.36E+03    2.18E+05   -2.35E+02    1.20E+02    3.61E+00    7.11E-01
+         300.0      7.4524    -1.00E+20    1.00E+20   -1.00E+20    7.53E+02    1.21E+06   -7.94E+01    7.62E+01    2.29E+00    5.34E+00
+       -------------------------------------------------------
+       
+       MOB = Electron mobility [cm^2/V/s]
+       COD = Electron conductivity [1/Ohm/m]
+       ETC = Electron thermal conductivity [W/m/K]
+       SEB = Seebeck coefficient [uV/K]
+       PEL = Peltier coefficient [uV]
+       

@@ -1,0 +1,67 @@
+#! /bin/bash
+
+MAXLEN=$1
+
+IFS="
+"
+while read -r LINE ; do
+  comment=
+  escape=
+  space=
+  if [ ${LINE::1} == "#" ] ; then
+    comment='#'
+    LINE="${LINE#?}"
+  else
+    escape='\'
+  fi
+  while [ ${#LINE} -gt $MAXLEN ] ; do
+    PIECE="${LINE::$MAXLEN}"
+    PIECE="${PIECE% *}"
+    echo -E "$comment$space$PIECE$escape"
+    LINE="${LINE#"$PIECE"}"
+    space=
+    if [[ ${LINE::1} == " " ]] ; then
+      space=" "
+      LINE="${LINE#" "}"
+    fi
+  done
+  echo -E "$comment$space$LINE"
+done
+
+
+
+exit
+# old version follows
+
+while read LONG_LINE
+do
+
+LINE=""
+TOTLEN=0
+FIRST=yes
+for WORD in $LONG_LINE
+do
+  LEN=`echo $WORD | wc -c `
+  EXPECTED_LEN=`expr $TOTLEN + $LEN`
+  if(test $EXPECTED_LEN -gt $MAXLEN)
+  then
+    if(test $FIRST = yes) then
+      echo $LINE \\
+      FIRST=no
+    else
+      echo '  ' $LINE \\
+    fi
+    LINE=""
+    TOTLEN=3
+  fi
+  LINE="$LINE $WORD"
+  TOTLEN=`expr $TOTLEN + $LEN`
+done
+if(test $FIRST = yes) then
+  echo $LINE
+  FIRST=no
+else
+  echo '  ' $LINE
+fi
+done
+

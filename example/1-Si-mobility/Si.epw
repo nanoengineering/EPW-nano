@@ -1,0 +1,72 @@
+#!/bin/bash
+#SBATCH -J Si-ep       #job name
+#SBATCH -o Si-ep.o%j        #output and error file name (%j expands to jobID)
+#SBATCH -n 20            #total number of mpi tasks requested
+#SBATCH -N 1
+#SBATCH -p qinfband #queue (partition) name
+##SBATCH --nodelist=compute-2-03
+#SBATCH --mail-user=zhoujw20@mit.edu
+##SBATCH --mail-type=begin
+#SBATCH --mail-type=end
+
+#############################################################################
+
+NPOOL=20
+NPROC=20
+MYDIR=`pwd`
+HOME=/home/username
+BIN_DIR=$HOME/espresso-5.4.0/bin
+EPW_DIR=$HOME/espresso-5.4.0/epw-6.2/bin
+PSEUDO_DIR=$MYDIR/pseudo
+
+OUTDIR=/scratch/username/search/Si/epw-test
+EPWDIR=$MYDIR/epw_results
+
+PW_COMMAND="mpirun -np $NPROC $BIN_DIR/pw.x -npool $NPOOL"  
+PH_COMMAND="mpirun -np $NPROC $BIN_DIR/ph.x -npool $NPOOL"
+EPW_COMMAND="mpirun -np $NPROC $EPW_DIR/epw.x -npool $NPOOL"
+
+#################### Parameters #############################################
+
+epw_scf="f"
+epw_nscf="f"
+epw="t"
+
+mkdir -p $OUTDIR
+mkdir -p $EPWDIR
+cd $EPWDIR
+
+##################################### EPW run #########################################
+
+if [ $epw_scf == "t" ]; then
+
+echo -e "  running the scf calculation on fine mesh for $material..."
+$PW_COMMAND < pw_scf.in > pw_scf.out
+echo -e "  running pw.x done..."
+
+fi
+
+if [ $epw_nscf == "t" ]; then
+
+echo -e "  running the nscf calculation on fine mesh for $material..."
+$PW_COMMAND < pw_nscf.in > pw_nscf.out
+echo -e "  running pw.x done..."
+
+fi
+
+if [ $epw == "t" ]; then
+
+echo -e "  running EPW calculation for $material..."
+$EPW_COMMAND < epw.in2 > epw.out
+echo -e "  running epw.x done..."
+
+# copy and save files
+mkdir -p result/
+mv bte.out ./result/
+mv $material.k_ibz* ./result/
+mv $material-ep-epw.out ./result/
+
+fi
+
+mv ../../$material-ep.o* ../../tmp/
+

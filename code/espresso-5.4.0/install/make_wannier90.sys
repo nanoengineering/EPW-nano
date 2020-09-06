@@ -1,0 +1,9 @@
+#=======================================
+# WANNIER90 	
+#=======================================
+
+F90=mpif90
+FCOPTS=$(FFLAGS) -nomodule 
+LDOPTS=
+
+LIBS = /home/~/espresso-5.4.0/lapack-3.2/lapack.a /home/~/espresso-5.4.0/BLAS/blas.a 

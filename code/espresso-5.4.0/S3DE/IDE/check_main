@@ -1,0 +1,61 @@
+#! /bin/sh 
+
+# writes to stdout the list of arguments that contain a fortran main.
+# -n   =>  write the others
+# if no argument is copied to stdout, it exits with an error
+
+negative=no
+if test "$1" = -n
+then
+  negative=yes
+  shift
+fi
+
+#
+# if no argument is supplied
+if [ -z "$*" ] ; then exit 0 ; fi
+
+# returns true if $1 is a f90 program
+# grep -qi '^[ \t]*program' $1 && grep -qi '^[ \t]*end[ \t]*program' $1
+
+#nothing=yes
+#output=""
+#for argument
+#do
+#  main=no
+#  if test -r $argument
+#  then
+#    grep -qi '^[ \t]*program' $argument &&
+#      grep -qi '^[ \t]*end[ \t]*program' $argument &&
+#      main=yes
+#   test $negative = no  && test $main = yes && output="$output$argument "
+#    test $negative = yes && test $main = no  && output="$output$argument "
+#  fi
+#done
+#
+#test "$output" && echo "$output" || exit 1
+#exit 0
+
+# Questa e' piu' veloce
+# Occhio perche' non e' esattamente consistente (la negazione)
+
+output=
+if [ $negative = no ] ; then
+  for file in $(grep -li '^[ \t]*program' "$@")
+  do
+    # NOTA: va eliminato per il caso in cui i programmi
+    #       finiscono solo con "end"
+    #grep -qi '^[ \t]*end[ \t]*program' $file && 
+    #
+      output="$output$file "
+  done
+else
+  for file in $(grep -vli '^[ \t]*program' "$@")
+  do
+    output="$output$file "
+  done
+fi
+
+test "$output" && echo "$output" || exit 1
+exit 0
+

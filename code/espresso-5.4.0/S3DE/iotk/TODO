@@ -1,0 +1,78 @@
+FOR VERSION 1.0
+* Testing on other machines/compilers (at least Lahey).
+* More debug.
+
+FOR VERSION 1.1
+* Integration with the automatic configurator.
+* Provide instructions and some automatization to run tests for bugs
+  outside configure. Since configure can have some problem on
+  particular systems (or with cross-compiling), an user should
+  be able to produce the configuration file by hand.
+* Documentation: better reference manual.
+* Better examples and better test suite.
+* Arrive to a stable version of the S3DE and of sprep preprocessor.
+* Improvement of the iotk tool
+* Check the implementation of columns. Add the possibility of specifying the
+  delimiter, forcing the compatibility with the reading conventions,
+  so that the delimiter itself is not needed for reading
+  but is used just for cosmetic reasons.
+
+SHORT TERM - Modifications not involving file format
+* Code cleaning:
+  + generic clean-up.
+  + clean the iotk_unit object; possibly use sprep to define a kind of
+    object container for the linked-list. The same structure could be used
+    for errors (pay attention to memory leakage due to distract users.)
+  + clean format related routines.
+* Possibility of opening a unit in a safe mode. Unit opened in safe mode
+  should be locked (user cannot access directly to the physical unit number)
+  and should forbid some writing features, to ensure complete
+  portability and transformability from binary to textual and viceversa.
+  For example, fmt should not be allowed.
+* Direct handling of ASCII/binary conversions also for real and complex data.
+* Write down an exact specification of the fortran format used. It can be useful
+  for external non-fortran programs that need to read textual files.
+* Implement double interfaces with errors and integers.
+* Transform some of the global options in unit parameter, possibly with
+  an hereditary mechanism.
+* Allow real-time control of WORKAROUND1; even the check for its need could be posticipated
+  to the run-time situation (think about this).
+* Allow real-time control of stream/sequential access and of the stream kind
+  It could be very interesting to find a way to use streams to overcome little-endian/big-endian
+  portability problems (think about this). A nice way would be to detect endianness automatically
+  when opening a file. However, it will not be easy to be systematic on every machine.
+* Routines to count/list attributes.
+* Documentation: a tutorial. (parola grossa!)
+* Documentation: man pages for individual routines.
+* Add some tools for system installation.
+* Add a "default" keyword also in writing routines. If the dat (or attr) is
+  equal to the default, then DO NOT write it.
+  This improves the simmetry in reading/writing.
+* Search through some XPATH inspired approach.
+  Example: iotk_scan_begin(unit,"name[@type='real']") should search the first tag named name
+  with an attribute type set to real.
+  Example: iotk_scan_begin(unit,"*[@type='real']") should search the first tag
+  with an attribute type set to real.
+* Interface with C I/O.
+* Interface with f2003 streams.
+* Possibility of scanning with multiple tags, i.e. iotk_scan_begin(unit,"uno/due/tre")
+  should search uno then due then tre. Attributes should come from the last tag.
+  Also possibility of specifying the starting tag in the iotk_open_read subroutine.
+
+MEDIUM TERM - Modifications involving file format
+* In textual data, add informations about the number of significant digits
+  and the maximum allowed number. Can be used to select the kind when going
+  from textual to binary.
+* Arrays of character are now written with one item per line, newline separated.
+  Try to find a more flexible approach.
+* More flexible iotk commands inside files.
+* Substitute iotk_link with xinclude (?). Maybe a better idea is to keep both.
+
+LONG TERM - Just ideas
+* Direct access to block files.
+* Tables.
+* Some smarter way to read/write objects.
+* Interface with other libraries (HDF,...)
+* Documentation: a complete and rigorous definition of the file formats, both
+  textual and binary.
+

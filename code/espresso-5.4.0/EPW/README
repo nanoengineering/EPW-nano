@@ -1,0 +1,336 @@
+                                       ``:oss/                                        
+                           `.+s+.     .+ys--yh+     `./ss+.                           
+                          -sh//yy+`   +yy   +yy    -+h+-oyy                           
+                          -yh- .oyy/.-sh.   .syo-.:sy-  /yh                           
+                 `.-.`    `yh+   -oyyyo.     `/syys:    oys      `.`                  
+               `/+ssys+-` `sh+      `                   oys`   .:osyo`                
+               -yh- ./syyooyo`                          .sys+/oyo--yh/                
+               `yy+    .-:-.                             `-/+/:`  -sh-                
+                /yh.                                              oys                 
+          ``..---hho---------`   .---------..`      `.-----.`    -hd+---.             
+       `./osmNMMMMMMMMMMMMMMMs. +NNMMMMMMMMNNmh+.   yNMMMMMNm-  oNMMMMMNmo++:`        
+       +sy--/sdMMMhyyyyyyyNMMh- .oyNMMmyyyyyhNMMm+` -yMMMdyyo:` .oyyNMMNhs+syy`       
+       -yy/   /MMM+.`-+/``mMMy-   `mMMh:`````.dMMN:` `MMMy-`-dhhy```mMMy:``+hs        
+        -yy+` /MMMo:-mMM+`-oo/.    mMMh:     `dMMN/`  dMMm:`dMMMMy..MMMo-.+yo`        
+         .sys`/MMMMNNMMMs-         mMMmyooooymMMNo:   oMMM/sMMMMMM++MMN//oh:          
+          `sh+/MMMhyyMMMs- `-`     mMMMMMMMMMNmy+-`   -MMMhMMMsmMMmdMMd/yy+           
+    `-/+++oyy-/MMM+.`/hh/.`mNm:`   mMMd+/////:-.`      NMMMMMd/:NMMMMMy:/yyo/:.`      
+   +os+//:-..-oMMMo:--:::-/MMMo. .-mMMd+---`           hMMMMN+. oMMMMMo. `-+osyso:`   
+   syo     `mNMMMMMNNNNNNNNMMMo.oNNMMMMMNNNN:`         +MMMMs:`  dMMMN/`     ``:syo   
+   /yh`     :syyyyyyyyyyyyyyyy+.`+syyyyyyyyo:`         .oyys:`   .oyys:`        +yh   
+   -yh-        ````````````````    `````````              ``        ``          oys   
+   -+h/------------------------::::::::://////++++++++++++++++++++++///////::::/yd:   
+   shdddddddddddddddddddddddddddddhhhhhhhhyyyyyssssssssssssssssyyyyyyyhhhhhhhddddh`   
+                                                    
+ ---------------------------------------------------------------------------------------                             
+
+ This EPW code is a modified version of the EPW v4 from the open-source Quantum ESPRESSO
+ for quantum simulation of materials, and is released under GNU General Public License
+ (v2). The orignal EPW v4 is released inside Quantun ESPRESSO in 2016, developed by 
+ S. Ponc\'e, E.R. Margine, C. Verdi, and, F. Giustino. For details of the original EPW
+ code, please refer to epw-code.org. As part of the Quantum ESPRESSO suite, please cite
+
+     "P. Giannozzi et al., J. Phys.:Condens. Matter 21 395502 (2009);
+      URL http://www.quantum-espresso.org",
+
+ in publications or presentations arising from this work. More details at
+ http://www.quantum-espresso.org/quote
+
+ Please also consider citing the EPW papers:
+ 1) F. Giustino, M. L. Cohen, and S. G. Louie, Phys. Rev. B 76, 165108 (2007)
+ 2) S. Ponc\'e, E. R. Margine, C. Verdi, and F. Giustino, Comput. Phys. Comm. 209, 116 (2016)
+
+ The software tree of this EPW code is composed of
+ /bin ==> Contains the epw.x soft link to the EPW executable.
+ /src ==> Contains all the EPW source files.
+ /examples  ==> Contains a lists of examples.
+
+ Installation
+ ------------
+ To compile the code you first need to issue ./configure in /espresso. 
+ EPW relies on the make.sys file created by QE. 
+ Then you can run ./make inside espresso/EPW/src.
+
+ EPW change log
+ --------------
+ Here lists the modifications made on the EPW code.
+
+###############################################################################################
+##                                                                                           ##
+##                              EPW change log, NanoEngineering                              ##
+##                                                                                           ##
+###############################################################################################
+
+
+=========================================== 04/2016 ===========================================
+(THL)     DISCRIPTION:
+            1 EPW cannot generate identical ifc and phonon frequency with that from q2r.x 
+              and matdyn.x, due to the weighting of q-points might be wrong. Here we have 
+              fixed the inconsistency. 
+            2 Added the phonon group velocity calculation.
+
+          MODIFIED AND ADDED FILES:
+            # dynbloch2wan.f90, dynwan2bloch.f90, rigid_epw.f90
+            + wsweight.f90
+
+          NOTE:
+            1 The phonon group velocity is calculated through the dyanmical materix.
+            2 This modification is compatible with "epwread" = .TRUE..
+-----------------------------------------------------------------------------------------------
+(THL)     DISCRIPTION:
+            1 Add paranano.f90 in convenience of coding MPI.
+
+          MODIFIED AND ADDED FILES:
+            # 
+            + para_nanoe.f90
+
+          NOTE:
+
+
+=========================================== 05/2016 ===========================================
+(JWZ,THL) DISCRIPTION:
+            1 Interchange the k and q loop. eph(el) W->B first, then eph(ph) W->B.
+            2 Calculate the phonon properties (frequency, velocity and eigen-mode) and 
+              long-range part of e-ph matrix in advance.
+            3 New selective scheme to k point.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90, rigid_epw.f90
+            + ephwan2bloche.f90, ephwan2bloch2.f90
+
+          NOTE:
+            1 Speed up the EPW up to 100x!!!
+            2 Only valid when "eft_mem" = .TRUE. and "ephwrite" = .FALSE..
+            3 If "phread" = .TRUE., then read phonon properties from file.
+            4 If "ephlread" = .TRUE., then read long-range part of e-ph matrix from file.
+            5 If "nptype" = 'n' or 'p', select k point according to n- or p-type 
+              semiconductor. If not set, select k point regularly.
+-----------------------------------------------------------------------------------------------
+(JWZ,THL) DISCRIPTION:
+            1 Include the rigid band model.
+            2 Compute the eDOS using the tetrahedron method.
+            3 Compute the Fermi level from eDOS and given doping concentration.
+
+          MODIFIED AND ADDED FILES:
+            # fermiwindow.f90
+            + edos.f90, fermilocation.f90
+
+          NOTE:
+            1 eDOS calculation has been parallized.
+            2 If "edos_read" = .FALSE., calculate eDOS, while "edos_read" = .TRUE., read 
+              eDOS from "prefix.edos" file
+            3 nkfdos1~3 only work when "edos_read" = .FALSE.. If not specified, use the values 
+              of nkf1~3. 
+            4 Imposed bandgap is given by "egap_rbm" [eV].
+            5 Doping concentration is given by "n_dope" [cm^-3].
+-----------------------------------------------------------------------------------------------
+(JWZ,THL) DISCRIPTION:
+            1 Tetrahedral smearing
+            2 Gaussian smearing
+            3 Adaptive Gaussian smearing
+            4 Lorentzian smearing      
+
+          MODIFIED AND ADDED FILES:
+            # self_elec.f90, ephwann_shuffle.f90
+            + tetra.f90
+
+          NOTE:
+            1 "smearing" = 'tetra', tetrahedral smearing.
+            2 "smearing" = 'gauss', Gaussian smearing.
+            3 "smearing" = 'adapt', adaptive Gaussian smearing. (pending)
+            4 "smearing" = 'lortz', Lorentzian smearing.
+-----------------------------------------------------------------------------------------------
+(THL)     DISCRIPTION:
+            1 Calculate elctron transport properties form ep-BTE.
+            2 Support reading metafile.
+            3 Parallelization.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90, selfen_elec.f90, elphon_shuffle_wrap.f90, epw_readin.f90
+            + bte.f90, bte_symm.f90, bte_io.f90, bte_export.f90, bte_driver.f90,
+              bte_iteration.f90, bte_transpt.f90
+
+          NOTE:
+            1 "bte" = 0, solve ep-BTE under RTA.
+            2 "bte" = 1, solve iterative ep-BTE (only el part). "bte" = 10, continue from 
+               last termination.
+            3  version 2.0.1.
+
+
+=========================================== 06/2016 ===========================================
+(THL)     DISCRIPTION:
+            1 Check electron energy, phonon frequency and e-ph matrix on specified points.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90
+            + 
+
+          NOTE:
+            1 Functioned when "filchk" is specified.
+            2 Format of input file: 
+                                    k_num cryst/cart
+                                       k1_x k1_y k1_z
+                                             .
+                                             .     
+                                    q_num cryst/cart
+                                       q1_x q1_y q1_z
+                                             .
+                                             .         
+                                    ephmat_num
+                                       ik ibnd jbnd
+                                             .
+                                             .
+
+
+=========================================== 07/2016 ===========================================
+(THL)     DISCRIPTION:
+            1 Save epf17 to disk to reduce the using of internal memory.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90, selfen_elec.f90
+            + 
+
+          NOTE:
+            1 Functioned when "save_mem" = .TRUE..
+            2 Compatible with parallelization.
+            3 The calculation time of self-energy will be increased.
+-----------------------------------------------------------------------------------------------
+(JWZ)     DISCRIPTION:
+            1 Add the acoustic sum rule to e-ph coupling matrix.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90
+            + 
+
+          NOTE:
+            1 Set "asr_eph" = .TRUE..
+            2 This modification is compatible with "epwread" = .TRUE..
+
+
+=========================================== 08/2016 ===========================================
+(THL)     DISCRIPTION:
+            1 New definition of "fsthick".
+
+          MODIFIED AND ADDED FILES:
+            # epw_readin.f90
+            + 
+
+          NOTE:
+            1 If "fsthick" is less than zero or not given, "fsthick" = 15*kB*T.
+            2 If the Fermi level falls outside the bandgap, we have different treatments
+              to the v and c bands. For example, when ef>cbnd_emin, cfsthick = fsthick +
+              (ef-cbnd_emin) while vfsthick unchanged.
+-----------------------------------------------------------------------------------------------
+(THL)     DISCRIPTION:
+            1 Include finite difference method for calculating the electron and phonon
+              group velocities.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90
+            + vgwan2bloch.f90
+
+          NOTE:
+            1 If "v_elph" = 'linear', compute velocity using finite difference method 
+            2 If "v_elph" = 'matrix', compute v_el and v_ph using dipole and dynamical 
+              matirce, respectively.
+
+
+=========================================== 09/2016 ===========================================
+(THL)     DISCRIPTION:
+            1 Now the inconsistent k- and q-mesh can be employeed in iterative scheme.
+            2 Optimize the usage of memory.
+            3 Generate k and q meshes in full and irreducible BZ automatically. There is no 
+              need for input k-mesh.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90, bte.f90, bte_symm.f90, bte_io.f90, bte_export.f90, 
+              bte_driver.f90, bte_iteration.f90
+
+          NOTE:
+            1 The number of k-mesh should be a multiple of q-mesh in each direction.
+            2 "bte" = 3, solve time-dependent ep-BTE. "bte" = 30, continue from last termination. 
+               When "dt" is different from that set in the last run, the time-dependent ep-BTE 
+               will be restarted from t=0. (beta version)
+            3 One can compare BTE/EPCHECK/xkf_cryst_irr.dat with the irreducible mesh
+              generated by QE (in crystal coordinate).
+            4 Version 2.0.2.
+-----------------------------------------------------------------------------------------------
+(THL)     DISCRIPTION:
+            1 Add electron-impurity scattering, based on Brooks-Herring model.
+            2 The Lindhard dielectric constant is computed.
+
+          MODIFIED AND ADDED FILES:
+            # ephwann_shuffle.f90, self_elec.f90, bte_export.f90, bte_driver.f90, 
+              bte_iteration.f90
+            + bte_impurity.f90
+
+          NOTE:
+            1 Compatible with iteration scheme.
+
+========================================== Bug Fixed ==========================================
+(THL)     DISCRIPTION:
+
+            1 allocate_epwq.f90
+
+              The dimension of "dmuxc" should be "dfftp%tg_nnr" rather than "dffts%tg_nnr".
+              "dfftp" and "dffts" are the total grids of dense and smooth meshes used in FFT.
+
+            2 io_dyn_mat2.f90
+
+              If the polar and spin-orbital couplings are considered at the same time in 
+              calculation, the Born effective charges and dielectric constant will become
+              zero.
+
+========================================== Parameters =========================================
+ phread          = .false.
+ ephlread        = .false.
+ edos_read       = .true.
+ nkfdos1         =  250
+ nkfdos2         =  250
+ nkfdos3         =  250 
+ egap_rbm        =  1.4220
+ n_dope          = -1.0d13
+ filchk          = 'eph_line.dat'
+ asr_eph         = .true.
+ nptype          = 'n'
+ smearing        = 'tetra'
+ v_elph          = 'linear'
+ bte             =  3
+ run             =  10000000
+ dt              =  3.0
+ save_mem        = .false.
+ impurity        = .true.
+ z_imp           = 1.0d0
+
+excluded_band
+
+===============================================
+(JWZ)
+
+added: [defectdens]: when non-zero, will use this to consider short-range potential scattering, while
+                     long range Coulomb scattering is considered using doping concentrations
+                     Unit: same as [epdope]
+
+----------------------------------------------
+
+May 2019:
+
+1) add electron scattering by impurity Coulomb field to the Wannier transformed short range 
+   scattering matrix
+
+   - [eimp_ls_mode], only works when [eimp_mode] == 7 or 8, determines how impurity scatterings are treated
+                  0: add both long range (Coulomb) and short range (central cell) scattering
+                  1: only consider long range scattering
+                  2: only consider short range scattering
+                  3: do not consider any defect scattering
+
+   - NOTE: [eimp_sr] which indicates only short range scattering is considered, only applies when [eimp_mode] = 3..6
+
+----------------------------------------------
+
+Feb 2020
+
+2) screening of polar scattering, [screen_polar], also [elop] to control polar scattering on/off
+
+
+

@@ -1,0 +1,34 @@
+PACKAGE S3 Development Environment
+VERSION 0.1.2
+AUTHORS Giovanni Bussi, Andrea Ferretti
+LICENSE 
+
+=====================================================================
+                S3DE -- S3 Development Environment
+=====================================================================
+
+This package is a suite of scripts used to manage an environment
+suitable for code development. Automatic Makefile generation, versions, 
+portability among different systems and library loading are some
+of the main tasks of the DE.
+
+Content of S3DE
+
+IDE          dir containing the scripts
+CONFIG       dir with all the stuff related to portability and system 
+             configuration. At the moment, different make.sys.SYSTEM are
+             stored, waiting for an automatic configurator based on
+             autoconf-generated scripts.
+OPTIONS      file contining the definition of global options ruling on 
+             the whole environment (such as e.g. the autodobule or 64bit compiler 
+             options)
+
+README       This readme file (a symbolic link to IDE/README)
+
+Makefile     global Makefile. It is automatically generated and may not be present
+             when downloading. Type make to get a manual.
+
+<packages>   All the other directories should be the packages actually present
+             in the environment.
+
+

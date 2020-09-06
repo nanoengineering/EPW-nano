@@ -1,0 +1,60 @@
+#! /bin/bash
+
+#
+# cut the source SUFFIXES (defined in IDE/IDE.conf) 
+# from the input file names 
+#
+# Suffix list is in SUFFIXES_SOURCE
+# -c option writes the output columnwise
+#
+
+shopt -s extglob
+
+#
+# load DEFAULTS
+if [ ! -e ./IDE/IDE.conf ] ; then
+   echo "ERROR: Unable to find ./IDE/IDE.conf" ; exit 1
+fi
+. ./IDE/IDE.conf
+
+col=""
+if [ "$1" = "-c" ] ; then col="yes" ; fi
+
+#
+# read source names
+source_list=`cat`
+
+newlist=""
+for src in $source_list
+do
+   newlist="$newlist ${src%.*}"
+done
+
+if [ "$col" = "yes" ] ; then
+   echo "$newlist" | tr " " "\n" | grep -v "^ *$"
+else
+   echo $newlist
+fi
+
+
+exit 0
+#old version follows
+
+for src in $source_list
+do
+    tmp=$src
+    for suffix in $SUFFIXES_SOURCE
+    do
+       tmp=`basename $tmp $suffix`
+    done
+    newlist="$newlist $tmp"
+done
+
+if [ "$col" = "yes" ] ; then
+   echo "$newlist" | tr " " "\n" | grep -v "^ *$"
+else
+   echo $newlist 
+fi
+
+exit 0
+

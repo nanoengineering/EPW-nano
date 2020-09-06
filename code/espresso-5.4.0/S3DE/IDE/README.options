@@ -1,0 +1,22 @@
+
+Here are reported the possible option TAGs to be set in the
+OPTIONS file in each directory.
+For each <TAG> the sintax may be:
+
+<TAG> <list-of-arguments>    or
+
+begin <TAG> 
+   <list-of-arguments>    
+end <TAG> 
+
+Note: <TAG> names should be capital case
+Allowed <TAG>'s are:
+
+   USE               list the used libraries
+   MAIN              list the source files to be used as main programs
+
+   DEFINITION        include lines in the header part of the produced Makefile (inner) 
+   MAKEFILE          directly include lines at the end of the produced Makefile (inner) 
+   HOME_MAKEFILE     directly include lines at the end of the library HOME Makefile (outer)
+   DEFINITION.<file> produce a specific compilation rule to make <file>.o
+

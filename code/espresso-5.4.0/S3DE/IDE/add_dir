@@ -1,0 +1,37 @@
+#! /bin/bash
+
+shopt -s extglob
+
+source IDE/IDE.conf
+
+echo "Answer to each of the following questions with a single line"
+
+DIRECTORY=
+while true ; do
+  read -p "Name of new directory:" DIRECTORY
+  [[ "$DIRECTORY" != $NAMERULE ]] && echo "Name is not correct, retry" && continue
+  [ -e "$DIRECTORY" ] && echo "Directory exists, retry" && continue
+  break
+done
+
+read -p "Full name of package:" NAME
+
+VERSION=
+while true ; do
+  read -p "Version:" VERSION
+  [[ "$VERSION" != $VERSRULE ]] && echo "Version is not correct, retry" && continue
+  break
+done
+
+read -p "Authors:" AUTHORS
+
+mkdir "$DIRECTORY"
+
+
+cat > $DIRECTORY/README << EOF
+PACKAGE $NAME
+VERSION $VERSION
+AUTHORS $AUTHORS
+EOF
+
+IDE/makemake.sh $DIRECTORY

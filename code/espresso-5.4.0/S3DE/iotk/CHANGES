@@ -1,0 +1,30 @@
+This document describe the main changes between the
+official versions. It is more coarse grained with respect
+to the CVS log.
+
+1.0.0	First official version
+1.0.1	Bug fix (loss of precision when reading complex from textual files)
+1.0.2	Bug fix (wrong call to 'modulo' intrinsic, not working with 64-bit default integers)
+        Improved portability in tools/auto_config (from Guido Roma)
+        Improved portability in include/iotk_config.h
+        Insertion of a check for <? iotk extensions="X"?>, to improve checks with files
+          generated with more advanced versions of the library
+        Bug fix (some __IOTK_WORKAROUND6 macros were mis-spelled) (from Paolo Giannozzi)
+
+1.1.0	New features:
+	- binary reading through streams, when supported (still experimental)
+        - more parameters can be configured runtime
+        - iotk.x tool (wrapped by iotk script)
+        - embedded manual (accessible with iotk.x tool)
+	Code reorganization:
+	- list template
+
+1.1.1	Introduced routine iotk_init_static_vars
+
+1.2.0	(including contributions from Carlo Cavazzoni, Andrea Ferretti, Paolo Giannozzi and Lorenzo Paulatto)
+	New features:
+	- newline option for iotk_write_attr()
+	- new workarounds
+	Code cleaning:
+	- all comments are in english now
+

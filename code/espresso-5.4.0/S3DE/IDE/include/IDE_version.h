@@ -1,0 +1,5 @@
+#define __IDE_VERSION "0.1.2"
+#define __IDE_VERSION_MAJOR 0
+#define __IDE_VERSION_MINOR 1
+#define __IDE_VERSION_PATCH 2
+#define __IDE_VERSION_EXTRA ""

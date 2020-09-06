@@ -1,0 +1,12 @@
+This example shows how to use pw.x to calculate phonons with a fully 
+relativistic US-PP which includes spin-orbit effects.
+
+The calculation proceeds as follows:
+
+1) make a self-consistent calculation for fcc-Pt
+   (input=pt.scf_ph.in, output=pt.scf_ph.out).
+
+2) make a phonon calculation at the Gamma point (input=pt.ph.in,
+   output=pt.ph.out).
+
+3) make a phonon calculation at X (input=pt.phX.in, output=pt.phX.out).

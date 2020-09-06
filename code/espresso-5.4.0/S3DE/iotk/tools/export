@@ -1,0 +1,39 @@
+#! /bin/sh
+# This script generates in the directory tmp/export
+# a collection of fortran sources and header files which can
+# be directly included in another package.
+
+if [ -e tmp/export ] ; then
+  rm -fr tmp/export
+fi
+
+mkdir tmp/export
+
+SRC='
+ base
+ unit_list
+ attr_interf dat_interf error_interf files_interf fmt_interf misc_interf
+ str_interf scan_interf stream_interf tool_interf unit_interf write_interf
+ xtox_interf
+ module
+ attr+CHARACTER* attr+COMPLEX* attr+REAL* attr+INTEGER* attr+LOGICAL*
+ dat+CHARACTER* dat+COMPLEX* dat+REAL* dat+INTEGER* dat+LOGICAL*
+ error files fmt misc str stream scan tool unit write xtox
+'
+
+COUNT=0
+
+cd src
+cp ../include/iotk_config.h ../include/iotk_auxmacros.h ../tmp/export
+
+for file in $SRC
+do
+  COUNT=`expr $COUNT + 1`
+  case "$COUNT" in
+    ?)  NCOUNT="0$COUNT" ;;
+    ??) NCOUNT="$COUNT" ;;
+  esac
+  OUTFILE=` echo "iotk_${NCOUNT}_${file}.f90" | sed 's/\*//' `
+  cat iotk_${file}.f90 > ../tmp/export/$OUTFILE
+done
+

@@ -1,0 +1,15 @@
+#! /bin/sh
+# wrapper for tools/configure
+
+# run from directory where this script is
+auxdir=`echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
+if [ "$auxdir" != "configure" ] ; then cd $auxdir ; fi
+
+# pass the arguments to the real configure script
+if test $# -eq 0
+then
+  tools/configure 
+else
+  tools/configure "$@"
+fi
+

@@ -1,0 +1,418 @@
+
+Input/Output Tool Kit (IOTK)
+Copyright (C) 2004 Giovanni Bussi
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+-----------------------------------------------------------------------------
+Input/Output Tool Kit (IOTK)
+-----------------------------------------------------------------------------
+
+The module 'iotk_module' should be included in the calling routines.
+All public names exported from this module has the "iotk_" prefix.
+All macros used in configuration has the "__IOTK_" prefix.
+Communication between users and library is based on
+integers, characters and logicals of the default kind;
+these kinds can be changed using proper compiler options.
+However, the library can handle formatted i/o for
+all intrinsic datatypes, kinds and ranks if properly configured.
+This is obtained interfacing procedures which acts on all kinds,
+types and (in almost all cases) ranks.
+The large number of needed functions is obtained using a simple
+loop preprocessor (sprep), so that the maximum number of types, kinds and
+ranks has to be known before preprocessing. However, configuration of
+kinds is obtained with standard C preprocessor, so that they can
+be easily configured editing file iotk_config.h .
+Backward API compatibility will be mantained (as long as it is possible)
+in future versions. However, order of optional arguments is not fixed and
+one should always use keywords. 
+Backward file compatibility will be mantained (as long as it is possible) in
+future versions.
+The library writes on files informations about the version of the library.
+It also writes informations about the version of the file format (file_version).
+The later has to be older or equal to the format supported in the actual library.
+
+ERROR HANDLING
+The way iotk handles error is sophisticated and allows for a trace back
+of the error condition inside the library.
+Every iotk routines which possibly leads to an error condition has an
+intent(out) integer argument ierr. The returned value is conventionally
+0 when the routine returns correctly, and different from 0 when the routines
+raise an error. The value is effectively a handler for a more complex
+object containing the error message. When an error is raised in a low-level
+iotk routine, a message is written on the error object. Any intermediate routine
+can add other messages to the error object, at least the number of the line in
+the source file. In this way, the error message contains a complete trace of
+the error plus some additional information.
+At any point in the chain the messages can be exctracted from the error object.
+At some point in the chain the error is really handled, usually by writing the
+message on the appropriate unit and aborting the execution.
+
+Scanning routines (iotk_scan_*) have an optional logical argument "found"
+which returns true or false. When scanning for data, also a "default" argument
+can be used. If one of these two argument is present, the searched
+object is considered as an optional object. Otherwise, it is considered as a needed object.
+
+If the ierr optional argument is absent, the error handling is leaved to the iotk library.
+In this case, if a needed object is not present, the library handles the error with a 
+forced stop.
+
+If the ierr optional argument is present, it returns an error code.
+ierr = 0 means that no error has occurred
+ierr > 0 means that an error has occurred probably related to file corruption
+ierr < 0 means that the item that was searched for has not been found
+         (it is possible only for scanning routines and only if the
+          found and the default keywords are both missing, i.e. only for no-optional objetcs)
+In scanning routines, if the argument "found" is present it returns .true.
+if the item has been found, .false. otherwise.
+If a library routine returns an ierr /= 0 it is STRONGLY RECOMMENDED to
+clear that error with iotk_error_clear(ierr) before proceeding.
+So, the final recipe is:
+* if you want to handle errors, always use the 'ierr' optional argument.
+  looking at the sign, you will discern between lacking data and file corruption.
+  with iotk_error_print you can obtain a description of the error.
+* if you want to leave the error handling to the library, don't use
+  the 'ierr' optional argument.
+  - if the object you are searching is optional, use 'found' or 'default' optional arguments.
+  - if the object you are searching is non-optional, don't use 'found' nor 'default' optional arguments.
+
+BINARY/TEXTUAL FILES
+Units can be opened on textual or binary files.
+The word 'binary' is used instead of the fortran 'unformatted' since
+using this libray also binary files have a degree of formattation.
+After a unit has been opened, the library automatically detects
+its format through an INQUIRE and acts consequently.
+Note that the iotk routines check for necessary properties of an opened unit
+access="sequential"
+blank ="null" (only textual i/o)
+pad   ="yes"  (only textual i/o)
+Moreover, a textual or binary unit can be designed as raw.
+In that case, no tags are placed on the file and everything
+has to be read and written in the same order.
+This feature is provided for compatibility reasons but it should be
+used as few as possible.
+
+OPTIONAL ARGUMENTS
+Most iotk routines accept optional arguments.
+They will not compile if the names of the arguments are not indicated.
+The only exeption is for "attr" and "val" arguments.
+
+BASIC WRITING ROUTINES
+iotk_write_begin  (unit,name[,attr][,ierr])
+iotk_write_end    (unit,name[,ierr])
+iotk_write_empty  (unit,name[,attr][,ierr])
+iotk_write_pi     (unit,name[,attr][,ierr])
+iotk_write_comment(unit,text[,ierr])
+integer,          intent(in) :: unit
+character(len=*), intent(in) :: name
+character(len=*), intent(in) :: text
+character(len=*), intent(in) :: attr
+integer,          intent(out):: ierr
+These routines write a tag named 'name' on fortran unit 'unit'.
+The type of the tag is determined from the name of the routine:
+iotk_write_begin   => <name attr>
+iotk_write_end     => </name>
+iotk_write_empty   => <name attr/>
+iotk_write_pi      => <?name attr?>
+iotk_write_comment => <!--text-->
+An optional attribute string can be supplied in 'attr'
+In end tags, no attribute is allowed.
+To build the attribute string, use iotk_write_attr.
+DON'T TRY TO MANIPULATE THE ATTRIBUTE STRING DIRECTLY!
+
+BASIC SCANNING ROUTINES
+iotk_scan_begin(unit,name[,attr][,found][,ierr])
+iotk_scan_end  (unit,name[,found][,ierr])
+iotk_scan_empty(unit,name[,attr][,found][,ierr])
+iotk_scan_pi   (unit,name[,attr][,found][,ierr])
+integer,          intent(in) :: unit
+character(len=*), intent(in) :: name ! len less or equal iotk_namlenx
+character(len=*), intent(out):: attr ! len possibily equal iotk_attlenx
+logical,          intent(out):: found
+integer,          intent(out):: ierr
+These routines scan for a tag named 'name' on fortran unit 'unit'.
+The type of the tag is determined from the name of the routine:
+iotk_scan_begin => <name attr>
+iotk_scan_end   => </name>
+iotk_scan_empty => <name attr/>
+iotk_scan_pi    => <?name attr?>
+These routines (except for iotk_scan_end) also fills the
+attr string, which can be subsequently decoded with iotk_scan_attr.
+DON'T TRY TO MANIPULATE THE ATTRIBUTE STRING DIRECTLY!
+
+WRITING ATTRIBUTES
+iotk_write_attr (attr,name,val[,first][,ierr])
+character(len=*), intent(out):: attr ! len less or equal iotk_namlenx
+character(len=*), intent(in) :: name ! len less or equal iotk_attlenx
+TYPE(KIND),       intent(in) :: val !any type, any kind, any rank [but only scalars for character]
+logical,          intent(in) :: first
+integer,          intent(out):: ierr
+This routine adds one attribute to the 'attr' string.
+To clean the string (for the first attribute) use first=.true.
+This is equivalent to attr="" before the call, but more efficient.
+The attribute is added in the form
+name="value", where "value" is a string containing a textual representation
+of the val variable.
+If one of <>&"' appears in val, it is automatically escaped.
+
+SCANNING ATTRIBUTES
+iotk_scan_attr  (attr,name,val[,found][,default][,eos][,ierr])
+character(len=*), intent(in) :: attr ! len possibily equal iotk_attlenx
+character(len=*), intent(in) :: name ! len less or equal iotk_namlenx
+TYPE(KIND),       intent(out):: val !any type, any kind, any rank [but only scalars for character]
+logical,          intent(out):: found
+TYPE(KIND),       intent(in) :: default RANK !same type, kind and rank as val
+logical,          intent(in) :: eos
+integer,          intent(out):: ierr
+This routine scans for one attribute named 'name' from the 'attr' string.
+If the attribute is found, it is read to variable 'val'.
+If it is not found and default is present, default is copied onto val.
+If TYPE is character and eos is present and true,
+an end-of-string terminator will be attached at the end of the read string,
+and the following bytes will not be touched. This is faster, but requires
+the user to take care directly of the end-of-string. Thus, it is discouraged.
+The attribute can be delimited with "" or with ''
+
+WRITING DATA
+iotk_write_dat  (unit,name,dat[,fmt][,columns][,ierr])
+integer,          intent(in) :: unit
+character(len=*), intent(in) :: name ! len less or equal iotk_namlenx
+TYPE(KIND),       intent(in) :: dat RANK !any type, any kind, any rank
+character(len=*), intent(in) :: fmt
+integer,          intent(in) :: columns
+integer,          intent(out):: ierr
+This routines write a data object, that is a self-described
+object containg fortran data.
+A single data object has the following form
+<name type="TYPE" kind="KIND" size="SIZE" columns="COLUMNS" len="LEN" fmt="FMT">
+.. DATA ...
+</name>
+where
+TYPE    is the intrinsic type (logical,integer,real,complex or character),
+KIND    is the data kind (stored in binary files only)
+SIZE    is the array size (shape informations are not stored)
+COLUMNS is the number of data per line
+LEN     is the string length
+FMT     is a fortran format string used to write data
+If the optional 'fmt' is not passed, default format is used and the fmt attribute
+is not written.
+Default format means one element per line.
+If the optional 'columns' is not passed, one datum per line is written and
+the columns attribute is not written. Note that this attribute is completely
+ininfluent when reading.
+columns and fmt are incompatible.
+For complex, two comma separated elements per line are written.
+Otherwise, 'fmt' is used as a formatting string. Note that fmt="*" means
+an usual write(unit,*) statement.
+If one of <>& appears in dat, it is escaped.
+
+SCANNING DATA
+iotk_scan_dat  (unit,name,dat[,found][,default][,ierr])
+integer,          intent(in) :: unit
+character(len=*), intent(in) :: name ! len less or equal iotk_namlenx
+TYPE(KIND),       intent(out):: dat RANK !any type, any kind, any rank
+logical,          intent(out):: found
+TYPE(KIND),       intent(in) :: default RANK !same type, kinad and rank as dat
+integer,          intent(out):: ierr
+A data object written with iotk_write_dat is read.
+If it is not found and default is present, default is copied onto dat.
+If a keyword is absent in the file, the value is deduced from the
+dat formal argument and no check is performed. This allows to write
+rapidly by hand data objects.
+If fmt is not present on file, the default format is used.
+Types and sizes are checked. Different kinds (for binary i/o) are automatically
+converted.
+Length (for characters) are not checked. If strings on files
+are longer then len(dat), only the first characters are read; if strings
+on files are shorter, dat is padded with blanks.
+
+OPENING AND CLOSING FILES
+iotk_open_write(unit[,file][,attr][,binary][,raw][,new][,root][,ierr])
+integer,          intent(in)  :: unit
+character(len=*), intent(in)  :: file
+character(len=*), intent(in)  :: attr
+logical,          intent(in)  :: binary
+logical,          intent(in)  :: new
+logical,          intent(in)  :: raw
+character(len=*), intent(in)  :: root ! len less or equal iotk_namlenx
+integer,          intent(out) :: ierr
+If file is present, this routines opens file 'file' on
+unit 'unit' with the proper options.
+If binary is present and true, the file is binary.
+If new is present and true, the file must not exist
+If raw is present and true, the file is considered as a raw data file.
+If file is not present, unit is assumed to be already connected;
+If root is present, it is used as the name of the root
+begin/end pair. If it is absent, the default "Root" is used.
+An optional attribute string can be supplied in 'attr'
+Also informations about iotk version and binary format are written as
+pi informations.
+
+iotk_open_read(unit[,file][,attr][,binary][,raw][,root][,ierr])
+integer,          intent(in)  :: unit
+character(len=*), intent(in)  :: file
+character(len=*), intent(out) :: attr
+logical,          intent(in)  :: binary
+logical,          intent(in)  :: new
+logical,          intent(in)  :: raw
+character(len=*), intent(out) :: root ! len possibly equal iotk_namlenx
+integer,          intent(out) :: ierr
+If file is present, this routines opens file 'file' on
+unit 'unit' with the proper options.
+If binary is present and true, the file is binary.
+If new is present and true, the file is considered as a raw data file.
+If file is not present, unit is assumed to be already connected.
+If root is present, the name of root in file is read onto that variable.
+If attr is present, the attributes of the root tag are read onto that variable.
+
+iotk_close_write(unit[,ierr])
+iotk_close_read(unit[,ierr])
+integer,      intent(in)  :: unit
+integer,      intent(out) :: ierr
+This routines close a file opened with iotk_open_*
+Note that if the units were already connected before iotk_open_*, they
+are left connected here.
+
+MULTIPLE FILES
+
+When reading, if a begin tag with an attribute iotk_link="FILENAME" is found,
+file FILENAME is mounted in its place
+If FILENAME begins with a "/", the path is absolute, otherwise it is relative
+to the original file.
+Note that the mounting is completely transparent for users, which can access
+the new file using the old unit. However, if the user wants to access
+directly the new file, iotk_physical_unit should be used.
+
+When writing, the user can switch a logical unit to a different file using
+the following routine
+
+iotk_link(unit,name,file,dummy[,binary][,raw][,create][,ierr])
+integer,          intent(in)  :: unit
+character(len=*), intent(in)  :: name
+character(len=*), intent(in)  :: file
+logical,          intent(in)  :: binary
+logical,          intent(in)  :: raw
+logical,          intent(in)  :: create
+integer,          intent(out) :: ierr
+name is the name of the tag which represents the link.
+file is the name of the new file
+if binary is present and true, the new file will be binary
+if raw is present and true, the new file will be raw
+if create is present and true, the new file is actually created
+and the next write statement will act on this new file automatically.
+Otherwise, only the symbolic link is created.
+
+OTHER UTILITIES
+
+character(len=*) iotk_index (index)
+integer, intent(in) :: index ! scalar or rank 1
+Returns a string representing the index in an array.
+Example: index = (/1,2,3/) => iotk_index = ".1.2.3"
+The correct way for writing an array of derived types is
+to build the names as follows
+! ONE-DIMENSIONAL ARRAY
+do i = 1 , n
+  call iotk_write_begin(unit,"dummy"//iotk_index(i))
+! WRITE THE OBJECT HERE
+  call iotk_write_end  (unit,"dummy"//iotk_index(i))
+end do
+do i = 1 , n
+  do j = 1 , m
+! NOTE THE ORDER OF INDEXES, THE FASTER IS THE LAST
+    call iotk_write_begin(unit,"dummy"//iotk_index((/i,j/)))
+! WRITE THE OBJECT HERE
+    call iotk_write_end  (unit,"dummy"//iotk_index((/i,j/)))
+  end do
+end do
+
+iotk_free_unit(unit[,ierr])
+integer, intent(out) :: unit
+integer, intent(out) :: ierr
+This routine returns the number of a free fortran unit.
+
+character(len=*) iotk_version
+it is a character variable containing the version string of iotk
+
+character  iotk_newline
+it is a character variable defined in iotk_config.h which
+maps in to the newline sequence.
+
+3 IOTK MACROS
+The IOTK macros are used to change the way the library is compiled.
+Every macro has a default, so in principle the library compiles
+even if all the macros are unset.
+However, additional features are available using them.
+
+__IOTK_HEADER_KIND
+defines the fortran kind for integer used as header in binary files.
+default is selected_int_kind(8).
+Note that changing this value can compromise the library usage.
+
+__IOTK_{LOGICAL,INTEGER,REAL}{1,2,3,4}
+define the kinds for the multi-kind library.
+These options are system dependent, and are better configured
+in the iotk_config.h file.
+If no kind is set for a given type, only the default kind is used.
+Only default characters are implemented.
+Complex are treated as reals.
+
+__IOTK_MPI_ABORT
+If it is defined, the internal error handler calls mpi_abort to exit
+This option is system dependent, and is better configured
+in the iotk_config.h file.
+
+__IOTK_ERROR_UNIT
+The unit where errors are written when the library handles them.
+Default is 0.
+
+__IOTK_OUTPUT_UNIT
+The unit for standard output, used by the 'iotk' tool.
+Default is 6.
+
+__IOTK_MAXARGS
+The maximum number of argument for the 'iotk' tool.
+Default is 256.
+
+__IOTK_MAXRANK
+Controls the maximum rank implemented in the library. Default is 7.
+It can be in the range 1 to 7.
+
+__IOTK_UNITMIN and __IOTK_UNITMAX
+They control the range where iotk_free_unit searches.
+These units are used for hidden features in the iotk library.
+If the user performs i/o on a unit in this range, the functionalities
+of the library can be compromised.
+Defaults are 90000 and 99999
+
+__IOTK_EOS
+It is a charater used internally to delimit strings.
+Default is achar(0) (it should be ok on any machine).
+
+__IOTK_NEWLINE
+It is a charater used in binary files to surround tags so that they can
+be grepped.
+Default is achar(10) (it should be ok on any machine).
+
+__IOTK_WORKAROUND{1,2,3,4,5,6,7,8,9}
+When one of them is defined, library uses a workaround for a 
+known bug in the compiler. Bugs are automatically found with the
+tools/configure script. Note that the use of these definitions
+can affect the final speed of the library.
+
+__IOTK_SAFEST
+If it is defined, all __IOTK_WORKAROUND are automatically defined.
+It can be used with unknown compilers.
+
+

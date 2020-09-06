@@ -1,0 +1,1 @@
+./configure FFLAGS="-O2 -assume byterecl -g -traceback -check bounds -fpe0" CFLAGS="-O3" F90=ifort F77=ifort

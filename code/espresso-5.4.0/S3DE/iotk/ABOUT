@@ -1,0 +1,38 @@
+
+The input/output tool kit (IOTK) is a Fortran90 library intended to provide a
+simplified access to tagged files formatted using some specific rule.
+A tagged file is a file containing tags and data, and can be textual,
+in which case a XML-compliant format is used, or binary, in which case a
+special format is used. The structure of the obtained files is hierarchical
+and suitable to represent complex objects. Textual files can be
+accessed with an XML browser or read with an XML parser.
+
+IOTK has a simple Fortran interface, some-what similar to the interface
+of the native Fortran i/o library. The library interface is overloaded over
+all Fortran types, kinds and ranks, so that the same interface is
+used to write a scalar integer or a matrix of double precision real numbers.
+Moreover, when reading binary files, kind conversion (e.g. from single to
+double precision) is performed transparently by the library.
+
+Even if the way used by IOTK to store the tags in binary files
+is not standard, there is a one-to-one correspondence between
+binary files and textual files, so that it is possible to transform a
+(fast but unportable) binary file into a (portable and human-readable) XML file
+without any knowledge about its content. A small external tool to perform
+these conversions is provided with this package.
+
+Refer to the documentation in the package for a complete reference.
+
+Note that this kit is not conceived an XML parser, but it can be used as a
+writer/parser for a limited subset of XML language.
+
+Known defects:
++ DTD informations are not processed.
++ There is presently no feature to list the tags in a file, or the
+  attributes in a tag. To found a tag or an attribute, its name has to be known.
++ Access to files is serial. If data are written in a given order
+  and read in a different order, performance overheads are expected.
+  This problem can be partially overcome by splitting the file in
+  a number of smaller files and pointing to them with virtual links
+  (see the documentation for details).
+

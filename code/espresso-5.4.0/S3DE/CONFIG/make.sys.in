@@ -1,0 +1,64 @@
+# @configure_input@
+
+# -----------------------------
+# compilation rules
+
+.SUFFIXES :
+.SUFFIXES : .o .c .f .f90
+
+.f90.o:
+	@f90rule@
+
+.f.o:
+	$(F77) $(FFLAGS) -c $<
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+# -----------------------------
+# compiler definitions
+
+@SET_MAKE@
+CC             = @cc@
+CFLAGS         = @cflags@ $(DFLAGS) $(IFLAGS)
+CPP            = @cpp@
+CPPFLAGS       = @cppflags@ $(DFLAGS) $(IFLAGS)
+F90            = @f90@
+MPIF90         = @mpif90@
+F90FLAGS       = @f90flags@ @pre_fdflags@$(FDFLAGS) $(IFLAGS) 
+PRECISION      = 
+FAUTODBL       = @fautodbl@ 
+F77            = @f77@
+FFLAGS         = @fflags@ $(PRECISION)
+FFLAGS_NOOPT   = @fflags_noopt@
+LD             = @ld@
+LDFLAGS        = @ldflags@
+AR             = @ar@
+ARFLAGS        = @arflags@
+RANLIB         = @ranlib@
+
+#------------------------------
+# specific definitions
+
+DFLAGS         = @dflags@
+FDFLAGS        = @fdflags@
+IFLAGS         = $(AUTO_INCLUDE)
+LIBOBJS        = $(AUTO_LIBS)
+
+# -----------------------------
+# libraries
+
+LIB_BLAS             = @blas_libs@
+LIB_BLAS_SWITCH      = @blas_libs_switch@
+#
+LIB_LAPACK           = @lapack_libs@
+LIB_LAPACK_SWITCH    = @lapack_libs_switch@
+#
+LIB_FFT              = @fft_libs@
+LIB_FFT_INCLUDE      = @fft_libs_include@
+LIB_FFT_SWITCH       = @fft_libs_switch@
+#
+LIB_MPI              = @mpi_libs@
+LIB_MASS             = @mass_libs@
+#
+LIBS                 = $(LIB_MPI) $(LIB_MASS)

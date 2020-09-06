@@ -1,0 +1,7 @@
+&input
+    amass(1)=114.818,
+    amass(2)=121.76,
+    asr='crystal',
+    flfrc='InSb666.fc',
+    flfrq='frequency'
+/

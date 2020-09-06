@@ -1,0 +1,638 @@
+#! /bin/sh
+# Shell PREProcessor (SPREP)
+# Copyright (C) 2004-2007 Giovanni Bussi
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# FOR A DESCRIPTION OF OPTIONS TYPE 'sprep --help' OR LOOK BELOW
+
+# TODO:
+#  clean up
+# KNOWN BUGS:
+#  file names containing spaces/newlines are not handled properly
+#  with 'auxfile' it is not possible to write more then one time on the
+#    the same file (i.e. it is not working as an append)
+
+################################################################################
+
+# PORTABILITY WRAPPER
+# This part of the script is aimed to relaunch the script itself
+# using a bash interpreter. The interpreter is searched in $BASH_LOCATION
+# or using the standard PATH environment variable.
+test -z "$BASH_LOCATION" && BASH_LOCATION=bash
+if test $# -eq 0
+then
+  $BASH_LOCATION --noprofile --norc "$0" --this-is-bash
+  exit
+elif test "$1" != --this-is-bash
+then
+  $BASH_LOCATION --noprofile --norc "$0" --this-is-bash "$@"
+  exit
+fi
+shift
+(( ${BASH_VERSINFO[0]} < 2)) && { echo "$0: bash version 2 is required" ; exit 1 ; }
+# END PORTABILITY WRAPPER
+
+################################################################################
+
+# SPREP LIBRARY
+# This is a library of variable/functions which are used by the sprep script.
+# The same library is included in the shell executed to process files.
+# 'sprep --library' => to print out the library
+# 'eval "$(sprep --library)"' => to 'source' the library into a bash shell
+# Inside sprep, the library is loaded into an exported variable and can
+# be sourced simple with 'eval "$SPREP_LIBRARY"'
+
+SPREP_VERSION_WITH_DOLLARS='$Revision: 1.23 $ $Date: 2007/06/20 16:12:46 $ (EXPERIMENTAL)'
+SPREP_LIBRARY="$(
+# first the dynamic parts, which needs the evaluation of some variables
+cat << END_OF_SPREP_LIBRARY_DYN
+declare -rx SPREP_VERSION="${SPREP_VERSION_WITH_DOLLARS//$/}"
+declare -rx __DATE__="$(date "+%b %d %Y")"
+declare -rx __TIME__="$(date "+%H:%M:%S")"
+END_OF_SPREP_LIBRARY_DYN
+# then everything else
+cat << 'END_OF_SPREP_LIBRARY'
+shopt -s extglob
+declare -r  sprep_controlk=$'\v'
+declare -r  newline=$'\n'
+declare     IFS="$newline "
+declare -r  dol='$'
+declare -r  gt='>'
+declare -r  lt='<'
+declare -r  null=''
+
+function sprep_reformat () {
+# translate a .spp file into a script
+  declare OPT=
+  declare IFS=
+  declare LINE=
+  declare FIRST=yes
+  declare -i line=0
+  declare MUTE="$SPREP_MUTE"
+  for OPT ; do
+    case "$OPT" in
+    (--mute) MUTE=yes ;;
+    (--verbose) MUTE= ;;
+    esac
+  done
+  while read -r LINE ; do
+    ((line++)) ;
+    if [ "${LINE:0:1}" = ">" ] ; then
+      FIRST=yes
+      echo "${LINE:1}"
+    elif [ -z "$MUTE" ] ; then
+      LINE="${LINE//\\\\/\\\\}" # Escapes backslashes
+      LINE="${LINE//\"/\\\"}"   # Escapes double quotes
+      LINE="${LINE//\`/\\\`}"   # Escapes back quotes
+      echo "echo \"${sprep_controlk}L$line$newline$LINE\""
+    else
+      if [ "$FIRST" ] ; then
+        echo ":"
+        FIRST=
+      fi
+    fi
+  done
+}
+readonly -f sprep_reformat
+
+sprep_split () {
+# reads a file produced by a script and split it into the effective files
+  declare OPT=
+  declare IFS="$newline"
+  declare LINE
+  declare FILE
+  declare IFILE
+  declare -i line=0
+  declare -i linen=0
+  exec 6>&1
+  while read -r LINE
+  do
+    if [ "${LINE::1}" != "$sprep_controlk" ] ; then
+      (( line++ )) ;
+      (( line == 1 || $linen != $line )) && line=linen && [ "$SPREP_LINEMARKERS" ] && echo "# $line \"$IFILE\"" 
+      echo "$LINE"
+    else
+      case "${LINE:1:1}" in
+      (L) linen="${LINE:2}" ;;
+      (O) FILE="${LINE:2}" &&
+          [[ $FILE == "$FILEBASE+"*"$SUFFIX" || $FILE == "$FILEBASE$SUFFIX" ]] &&
+          exec > "$FILE"  ;;
+      (I) IFILE="${LINE:2}" ;;
+      esac
+    fi
+  done
+  exec 1>&6 6>&-
+}
+readonly -f sprep_split
+
+function sprep_extract () {
+  declare IFS=
+  declare LINE=
+  while read -r LINE
+  do
+    [ "${LINE::2}" == "${sprep_controlk}$1" ] &&
+    echo "${LINE#${sprep_controlk}$1}"
+  done
+}
+readonly -f sprep_extract
+
+function auxfile () {
+  if [ "$1" ] ; then
+    echo "${sprep_controlk}O$sprep_basefile+$1$sprep_suffix"
+  else
+    echo "${sprep_controlk}O$sprep_basefile$sprep_suffix"
+  fi
+}
+readonly -f auxfile
+
+function include () {
+  local sprep_path=
+  local sprep_found=
+  local sprep_thisfile_save="$sprep_thisfile"
+  local sprep_option=
+  local sprep_format=auto
+  local sprep_file=
+  local IFS=" $newline"
+  for sprep_option ; do
+    case "$sprep_option" in
+    (--format=shell|-s) sprep_format=shell ;;
+    (--format=spp|+s)   sprep_format=spp ;;
+    (--format=auto)     sprep_format=auto ;;
+    (*) sprep_file="$sprep_option" ;;
+    esac
+  done
+  if [ "$sprep_format" = auto ] ; then
+    [[ "$sprep_file" == *.spp ]] && sprep_format=spp
+    [[ "$sprep_file" == *.sh ]]  && sprep_format=shell
+  fi
+  sprep_thisfile="$sprep_inputfile"
+  for sprep_path in "${SPREP_INCPATH[@]}"
+  do
+    if [ "$sprep_path" ] && [ -r "$sprep_path/$sprep_file" ] ; then
+      sprep_thisfile="$sprep_path/$sprep_file"
+      echo "${sprep_controlk}I$sprep_thisfile"
+      if [ "$sprep_format" = shell ] ; then
+        eval "$(<$sprep_path/$sprep_file)"
+      else
+        eval "$(sprep_reformat < $sprep_path/$sprep_file)"
+      fi
+      sprep_thisfile="$sprep_thisfile_save"
+      echo "${sprep_controlk}I$sprep_thisfile"
+      sprep_found=yes
+      break
+    fi
+  done
+  if test -z "$sprep_found" ; then
+    echo "${sprep_controlk}EFile not found $sprep_file"
+    exit 1
+  fi
+}
+readonly -f include
+
+function depends () {
+  local sprep_path=
+  local sprep_found=
+  local sprep_thisfile_save="$sprep_thisfile"
+  local sprep_option=
+  local sprep_file=
+  local IFS=" $newline"
+  for sprep_option ; do
+    case "$sprep_option" in
+    (*) sprep_file="$sprep_option" ;;
+    esac
+  done
+  sprep_thisfile="$sprep_inputfile"
+  for sprep_path in "${SPREP_INCPATH[@]}"
+  do
+    if [ "$sprep_path" ] && [ -r "$sprep_path/$sprep_file" ] ; then
+      sprep_thisfile="$sprep_path/$sprep_file"
+      echo "${sprep_controlk}I$sprep_thisfile"
+      sprep_thisfile="$sprep_thisfile_save"
+      echo "${sprep_controlk}I$sprep_thisfile"
+      sprep_found=yes
+      break
+    fi
+  done
+  if test -z "$sprep_found" ; then
+    echo "${sprep_controlk}EFile not found $sprep_file"
+    exit 1
+  fi
+}
+readonly -f depends
+
+function error () {
+  echo "${sprep_controlk}E$1"
+  exit 1
+}
+
+function sprep_build_script () {
+    cat << EOF
+readonly sprep_inputfile="$1"
+         sprep_thisfile="$1"
+readonly sprep_basefile="$FILEBASE"
+readonly sprep_suffix="$SUFFIX"
+EOF
+    cat << 'EOF'
+readonly SPREP_RESTRICTED
+
+# LOADING THE ARRAY SPREP_INCPATH
+eval "$SPREP_INCPATH_EXPORT"
+
+# LOADING THE LIBRARY
+eval "$SPREP_LIBRARY"
+
+# IMMEDIATELY EXIT ON ERROR
+set -e
+# SETTINGS FOR RESTRICTED SHELL
+
+[ "$SPREP_RESTRICTED" ] && { PATH= ; enable -n source . ; set -r ; }
+
+auxfile
+# PROLOGUE
+eval "$SPREP_PROLOGUE"
+# END OF SPREP_PROLOGUE
+echo "${sprep_controlk}I$sprep_inputfile"
+EOF
+sprep_reformat < "$1"
+}
+readonly -f sprep_build_script
+
+END_OF_SPREP_LIBRARY
+)"
+declare -rx SPREP_LIBRARY
+
+################################################################################
+# END OF FUNCTION LIBRARY
+################################################################################
+
+# SPREP_LIBRARY is loaded on the current shell
+eval "${SPREP_LIBRARY}"
+
+################################################################################
+# OPTION INTERPRETATION
+
+declare -a COMMAND_LINE=("$@")
+SPREP_AUTODEP=
+PRINT_HELP=
+PRINT_COPYRIGHT=
+PRINT_VERSION=
+PRINT_LIBRARY=
+declare -a FILES
+unset FILES
+export SPREP_LINEMARKERS=yes
+export UNSPREP=
+export SPREP_PROLOGUE=
+export SPREP_RESTRICTED=yes
+export TMPDIR
+export SUFFIX=".f90"
+export COMPARE_FIRST=
+export TMPDIR_LEAVE=
+declare -a SPREP_INCPATH
+SPREP_LANGUAGE=
+NEXT=
+PREPEND=
+[ "$TMPDIR" ] || TMPDIR="/tmp"
+for OPT in "${COMMAND_LINE[@]}"
+do
+  OPTION="$PREPEND$NEXT$OPT"
+  NEXT=
+  case $OPTION in
+    (--version) PRINT_VERSION=yes ; EXIT=yes ;;
+    (-version) PRINT_VERSION=yes ;;
+    (--help) PRINT_HELP=yes ; EXIT=yes ; PRINT_VERSION=yes ;;
+    (--copyright) PRINT_COPYRIGHT=yes ; EXIT=yes ;;
+    (--library) PRINT_LIBRARY=yes ; EXIT=yes ;;
+    (-D|--define) NEXT="-D" ; continue ;;
+    (-D*([_a-zA-Z])*(_a-zA-Z0-9)) SPREP_PROLOGUE="$SPREP_PROLOGUE${OPTION#-D}=1$newline" ;;
+    (-D*([_a-zA-Z])*(_a-zA-Z0-9)=*) TEMP="${OPTION#-D}";
+                                    SPREP_PROLOGUE="$SPREP_PROLOGUE${TEMP%%=*}=\"${TEMP#*=}\"$newline" ;;
+    (-U|--undefine) NEXT="-U" ; continue ;;
+    (-U*([_a-zA-Z])*(_a-zA-Z0-9)) SPREP_PROLOGUE="${SPREP_PROLOGUE}unset ${OPTION#-U}$newline" ;;
+    (-I|--include) NEXT="-I" ; continue ;;
+    (-I*) SPREP_INCPATH[${#SPREP_INCPATH[@]}]="${OPTION#-I}" ;;
+    (-include|--forceinclude) NEXT="-include" ; continue ;;
+    (-include*) SPREP_PROLOGUE="${SPREP_PROLOGUE}include ${OPTION#-include}$newline" ;;
+    (-x|--language) NEXT="-x" ; continue ;;
+    (-xf90) SPREP_LANGUAGE=f90 ;;
+    (-autodep|--autodep) SPREP_AUTODEP=yes ;;
+    (--unsprep)  UNSPREP=yes ;;
+    (-P|--nolinemarkers) SPREP_LINEMARKERS= ;;
+    (+P|--linemarkers) SPREP_LINEMARKERS=yes ;;
+    (--restricted) SPREP_RESTRICTED=yes ;;
+    (--unrestricted) SPREP_RESTRICTED= ;;
+    (--input) NEXT="--input=" ;;
+    (--input=*) FILES[${#FILES[@]}]="${OPTION#--input=}" ;;
+    (--tmpdir-leave) TMPDIR_LEAVE=yes ;;
+    (--tmpdir-noleave) TMPDIR_LEAVE= ;;
+    (--tmpdir) NEXT="--tmpdir=" ;;
+    (--tmpdir=*) TMPDIR="${OPTION#--tmpdir=}" ;;
+    (--suffix) NEXT="--suffix=" ;;
+    (--suffix=*) SUFFIX="${OPTION#--suffix=}" ;;
+    (--compare-first) COMPARE_FIRST=yes ;;
+    (--nocompare-first) COMPARE_FIRST= ;;
+    (--) PREPEND="--input=" ;;
+    (-*) echo "$0: Unrecognized option $OPTION" ; exit 1 ;;
+    (*) FILES[${#FILES[@]}]="$OPTION" ;;
+  esac
+done
+[ "$NEXT" ] && { echo "$0: Option $OPT requires an argument" ; exit 1 ; }
+
+# This is a workaround to export an array variable
+export SPREP_INCPATH_EXPORT="$(declare -p SPREP_INCPATH)"
+
+[ "$PRINT_VERSION" ] && echo "Sprep version :: $SPREP_VERSION"
+
+[ "$PRINT_COPYRIGHT" ] && cat << END_OF_COPYRIGHT
+Shell PREProcessor (SPREP)
+Copyright (C) 2004-2006 Giovanni Bussi
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+END_OF_COPYRIGHT
+
+################################################################################
+# DOCUMENTATION
+
+[ "$PRINT_HELP" ] && cat << \END_OF_HELP
+Usage: sprep [OPTIONS] [FILES]
+Process one or more files with Shell PREProcessor.
+! HELP IS NOT UP TO DATE !
+
+PREREQUISITES
+The Bourne again shell (bash) is needed.
+The bash executable should be reached with the command
+"bash" within the sprep script, so its path
+should be included in the variable PATH.
+Alternatively, the environment variable BASH_LOCATION
+should be set to the exact position of the bash executable.
+Note that version 2 (or newer) of the bash interpreter is required.
+
+MAIN OPTIONS (in their long, suggested form)
+--version             print a line identifying the sprep version and exit
+--help                print this help and exit
+--copyright           print a copyright flag and exit
+--library             print the full sprep library, so that it can be
+                      subsequently included in a bash shell with
+                      eval "$(sprep --library)"
+--define <DEF>        where <DEF> has the form:
+                      <VAR>        variable <VAR> is set equal to 1
+                      <VAR>=<VAL>  variable <VAR> is set equal to <VAL>
+--undefine <DEF>      undefines a previously defined variable
+--linemarkers         print linemarkers (default)
+--nolinemarkers       do not print linemarkers
+--autodep             sprep reprocess the file only if some of the output file is
+                      not-existent or older than some of the input files
+                      Input files are the present file plus included files
+--compare-first       compare output files before really rewriting them.
+                      useful expecially when producing multiple files and the
+                      modifications involves only one of them
+                      it is still experimental
+--nocompare-first     do not compare output files before really rewriting them (default)
+--language <LANG>     where <LANG> can presently be "f90", set language-specific rules
+--include <DIR>       add <DIR> to the search path for include files
+--unsprep             unsprep all input files (i.e. transform them in a form so that
+                      a subsequent application of sprep restore them to the original
+                      form. Usually this transformation leaves the files unchanged)
+--forceinclude <FILE> include <FILE>
+--restricted          run the scripts in a restricted shell (default)
+--unrestricted        run the scripts in an --unrestricted shell (can be VERY dangerous)
+--tmpdir <DIR>        name of a temporary directory
+                      (default is $TMPDIR if defined, otherwise /tmp)
+--suffix <SUFFIX>     use <SUFFIX> as the output file suffix (default is .f90)
+--input <FILE>        add <FILE> to the list of files to be processed
+                      (useful to process file with names beginning with '-')
+--                    end of options; following arguments are considered as input files
+                      even if they start with -
+
+OTHER OPTIONS (most of them have been implemented for cpp compatibility)
+-version              like --version but does not exit (cpp compatibility)
+-D <DEF>              like --define <DEF> (cpp compatibility)
+-D<DEF>               like --define <DEF> (cpp compatibility)
+-U <DEF>              like --undefine <DEF> (cpp compatibility)
+-U<DEF>               like --undefine <DEF> (cpp compatibility)
+-I <DIR>              like --include <DIR> (cpp compatibility)
+-I<DIR>               like --include <DIR> (cpp compatibility)
+-P                    like --nolinemarkers (cpp compatibility)
++P                    like --linemarkers
+-include <FILE>       like --forceinclude <FILE> (cpp compatibility)
+-include<FILE>        like --forceinclude <FILE> (cpp compatibility)
+-autodep              like --autodep (OBSOLETE, to remove soon)
+-x <LANG>             like --language <LANG> (cpp compatibility)
+-x<LANG>              like --language <LANG> (cpp compatibility)
+
+Preprocessor rules:
+(1) a line beginning with ">" contains a shell command
+(2) otherwise, a line is simple echoed on output after some substitution
+
+Substitution are performed:
+(*) for "$" with variable substitution or command substitution
+
+Note that lines in the form
+LINE
+are replaced with
+echo "LINE+"
+where LINE+ is equal to LINE but backslashes, double quotes and backquotes are escaped.
+For this reasons, inside command substitution these characters are not allowed.
+Moreover, commands has to be on a single line.
+
+PREDEFINED VARIABLES
+$SPREP_VERSION    evaluates to the sprep version
+$newline          evaluates to a single newline
+$dol              evaluates to a dollar symbol
+$gt               evaluates to a "greater than" symbol
+$lt               evaluates to a "lesser than" symbol
+$null             evaluates to an empty string
+$__DATE__         evaluates to the preprocessing date
+$__TIME__         evaluates to the preprocessing time
+$SPREP_* are reserved for internal and future usages
+
+LINEMARKERS
+When the --linemarkers option is specified (and by default) sprep
+adds lines in the form 
+# N "FILE"
+where N is the line number and FILE is the name of the file.
+Usually the compiler understands these directives and indicates
+errors with their position in the original files (.spp)
+Moreover, using a C preprocessor, also macros __LINE__ and __FILE__
+refer to the original files.
+
+Functions
+auxfile <KEYWORD>
+  changes the output to a file with a suffix +<KEYWORD>
+include [OPTIONS] <FILE>
+  include <FILE>
+  possible options:
+  --format=spp or +s
+    <FILE> is processed as a sprep file
+  --format=sh or -s
+    <FILE> is processed as a script
+  --format=auto
+    <FILE> is processed as a script or a sprep file depending on its
+    extension, respectively .sh and .spp
+END_OF_HELP
+
+# END OF DOCUMENTATION
+################################################################################
+
+[ "$PRINT_LIBRARY" ] && echo "$SPREP_LIBRARY"
+
+[ "$EXIT" ] && exit 0
+
+# END OPTIONS INTERPRETATION
+
+################################################################################
+# AUXILIARY BASH FUNCTIONS
+process_file() {
+  local INFILE
+  INFILE="$1"
+  echo -n "$INFILE: "
+  [[ "${INFILE}" != *.spp ]] && { echo "wrong suffix!" ; return ; }
+  test -r "$INFILE" || { echo "file not readable!" ; return ; }
+  FILEBASE="${INFILE%.spp}"
+  FILEBASE="${FILEBASE##*/}"
+    DOSPREP=yes
+    if test "$SPREP_AUTODEP" ; then
+      echo -n "dependencies ... "
+      DOSPREP=
+      DOADFILE=yes
+      export SPREP_MUTE=yes
+      if [ -e ".$FILEBASE.ad" ] ; then
+        DOADFILE=
+        INFILES="$(sprep_extract I < ".$FILEBASE.ad" | sort | uniq)"
+        for SOURCED in $INFILE $INFILES ; do
+          test "$SOURCED" -ot ".$FILEBASE.ad" || { DOADFILE=yes ; chmod u+w ".$FILEBASE.ad" ; break ; }
+        done
+      fi
+      if [ "$DOADFILE" ] ; then
+        echo -n "creating ".$FILEBASE.ad" ... "
+        TMPSCRIPT="$(sprep_build_script $INFILE)" &&
+        echo "$TMPSCRIPT" | $BASH > ".$FILEBASE.ad"
+      fi
+      OUTFILES="$(sprep_extract O < ".$FILEBASE.ad" | sort | uniq)"
+      INFILES="$(sprep_extract I < ".$FILEBASE.ad" | sort | uniq)"
+      for OUTFILE in $OUTFILES ; do
+        for SOURCED in $INFILE $INFILES ; do
+          test -e $OUTFILE -a $SOURCED -ot $OUTFILE || { DOSPREP=yes ; break 2 ; }
+        done
+      done ||
+      echo "ERROR PROCESSING $INFILE"
+    fi
+    [ "$DOSPREP" ] || echo "NOT processed"
+
+    if [ "$DOSPREP" ] ; then
+      export SPREP_MUTE=
+      if [ "$COMPARE_FIRST" ] ; then
+        echo -n "working in $WORKDIR ..."
+      else
+        echo -n "removing dependent files ... "
+        for FILE in "$FILEBASE$SUFFIX" "$FILEBASE+"*"$SUFFIX" ; do
+          test -e "$FILE" && chmod u+w "$FILE" && rm "$FILE"
+        done
+      fi
+      echo -n "processing ... "
+      TMPSCRIPT="$(sprep_build_script $INFILE)" &&
+      TMPOUT="$(echo "$TMPSCRIPT" | $BASH)" &&
+      [ "$COMPARE_FIRST" ] &&  cd $WORKDIR
+      DONE=
+      echo "$TMPOUT" | sprep_split && DONE="yes" 
+      if [ "$DONE" ] ; then
+        if [ "$COMPARE_FIRST" ] ; then
+          echo -n "moving files ..."
+          for FILE in "$MAINDIR/$FILEBASE$SUFFIX" "$MAINDIR/$FILEBASE+"*"$SUFFIX" ; do
+            if [ -e "$FILE" ] ; then
+              NEWFILE="$WORKDIR/${FILE#$MAINDIR/}"
+               if [ -e "$NEWFILE" ] ;then
+                 if cmp "$NEWFILE" "$FILE" > /dev/null ; then
+                   chmod u+w "$NEWFILE"
+                   rm "$NEWFILE"
+                 else
+                   chmod u+w "$FILE"
+                   mv "$NEWFILE" "$FILE"
+                 fi
+               else
+                 chmod u+w "$FILE"
+                 rm "$FILE"
+               fi
+            fi
+          done
+          for file in "$WORKDIR/"* ; do
+            test -e "$file" && mv $file $MAINDIR
+          done
+          cd $MAINDIR
+        fi
+        echo "done"
+      else
+        echo "ERROR PROCESSING $INFILE"
+      fi
+    fi
+}
+
+unsprep_file() {
+  local INFILE="$1"
+  local IFS=
+  echo "FILE $INFILE:"
+  [[ ${INFILE} == *.spp ]] && { echo "wrong suffix!" ; return ; }
+  test -r "$INFILE" || { echo "file not readable!" ; return ; }
+  FILEBASE="${INFILE%.*}"
+  FILEBASE="${FILEBASE##*/}"
+  SUFFIX=.spp
+  local DOLLAR='${dol}'
+  local GT='${gt}'
+  while read -r LINE ; do
+    LINE="${LINE//'$'/$DOLLAR}"
+    echo "${LINE//#'>'/$GT}"
+  done < $INFILE > $FILEBASE$SUFFIX
+}
+
+# END OF AUXILIARY BASH FUNCTIONS
+################################################################################
+
+if [ "$COMPARE_FIRST" ] ; then
+  for((iii=$$;;iii++)) ;do
+    test -e $TMPDIR/$iii || break
+  done
+  mkdir $TMPDIR/$iii
+  WORKDIR=$TMPDIR/$iii
+  chmod go-rwx "$WORKDIR"
+  MAINDIR=$(pwd)
+fi
+[[ "$UNSPREP" ]] || umask a-w
+
+for INFILE in "${FILES[@]}" ; do
+  if [[ "$UNSPREP" ]] ; then
+    unsprep_file "$INFILE"
+  else
+    process_file "$INFILE"
+  fi
+done
+
+if [ "$COMPARE_FIRST" ] && [ -z "$TMPDIR_LEAVE" ] ; then
+  rm -f $WORKDIR/*
+  rmdir $WORKDIR/
+fi
+
+
+

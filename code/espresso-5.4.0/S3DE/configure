@@ -1,0 +1,60 @@
+#! /bin/sh
+#
+# This script is a simple wrapper calling the autoconf configuration
+# script (configure) in CONFIG/
+# Dependencies may be also directly generated 
+#
+#================================================================
+#
+MANUAL=" Usage
+   configure [-h, --help] [<conf_flags>]
+
+ -h, --help           print this manual    
+ <conf_flags>         these flags will be passed to 
+                      the autoconf configure
+
+ After configuration, the make.sys file will created in the
+ S3DE home (current) directory
+ 
+"
+#
+#================================================================
+#
+
+
+# run from directory where this script is
+auxdir=`echo $0 | sed 's/\(.*\)\/.*/\1/'` # extract pathname
+if [ "$auxdir" != "configure" ] ; then cd $auxdir ; fi
+
+
+#
+# detect the simplest cases 
+#
+case $1 in 
+  ("-h" | "--help" )      echo "$MANUAL"     ; exit 0 ;;
+esac
+
+#
+# run the autoconf configure with the
+# given cong_flags 
+#
+
+test -e ./CONFIG/make.sys       && rm ./CONFIG/make.sys
+test -e ./CONFIG/configure.msg  && rm ./CONFIG/configure.msg
+
+CFLAGS=$*
+./CONFIG/configure $CFLAGS
+
+#
+# copy make.sys in the home dir
+# and final clean up
+#
+test -e ./CONFIG/make.sys && mv ./CONFIG/make.sys .
+test -e config.log        && mv config.log    ./CONFIG/
+test -e config.status     && mv config.status ./CONFIG/
+test -e configure.msg     && mv configure.msg ./CONFIG/
+#
+
+exit 0
+
+

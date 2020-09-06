@@ -1,0 +1,28 @@
+
+begin MAKEFILE
+
+# INFO updates all *.f90 files with preprocessor
+update:
+	cd ../include ; ../../IDE/bin/sprep --autodep iotk_auxmacros.spp --include . --suffix .h
+	../../IDE/bin/sprep --autodep *.spp --include ../include
+
+# INFO similar to update, with --compare-first (still unstable)
+update-compare:
+	cd ../include ; ../../IDE/bin/sprep --compare-first --autodep iotk_auxmacros.spp --include . --suffix .h
+	../../IDE/bin/sprep --autodep *.spp --compare-first --include ../include
+
+# INFO creates a directory tmp/export containing few source files
+export:
+	cd .. ; tools/export
+
+end MAKEFILE
+
+begin BEFORE_MAKEMAKE
+cd include/
+../../IDE/bin/sprep --autodep iotk_auxmacros.spp --include . --suffix .h
+cd ../
+cd src/
+../../IDE/bin/sprep --autodep *.spp --include ../include
+end BEFORE_MAKEMAKE
+
+

@@ -1,0 +1,7 @@
+&input
+    amass(1)=26.98,
+    amass(2)=74.922,
+    asr='crystal',
+    flfrc='alas444.fc',
+    flfrq='frequency'
+/

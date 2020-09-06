@@ -1,0 +1,27 @@
+This file documents the format of the files handled by the iotk library.
+
+TEXTUAL FILES
+...
+
+BINARY FILES
+Iotk binary files are standard serial access Fortran binary files.
+A binary file is then a collection of records, and each read/write
+statement acts exactly on one of them.
+Informations about the lengths of the tags are stored as integers
+of kind equal to __IOTK_HEADER_KIND, which is predefined
+to selected_int_kind(8). This should map to 32-bit integers.
+
+Each tag is written on a pair of records.
+The first record contains an header, the second one another header
+and the tag, written as follows
+write(unit) header
+write
+only an integer of kind equal to the macro __IOTK_HEADER_KIND.
+If this macro is undefined, the default choice is selected_int_kind(8).
+This usually leads to a 32 bit integer.
+
+header  = control + taglenp*(iotk_ncontrol+1)
+
+
+
+

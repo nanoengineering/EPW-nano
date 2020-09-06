@@ -1,0 +1,90 @@
+#! /bin/bash
+
+# getoption [-c] keyword
+# -c incolonna le parole dell'output
+
+column=no
+if test "$1" = -c
+then
+  column=yes
+  shift
+fi
+
+search="$*"
+
+IFSBCK="$IFS"
+IFSNL="
+"
+shopt -s extglob
+
+OUTPUT=""
+PREPEND=""
+while IFS="$IFSNL" && read -r LINE && IFS="$IFSBCK" ; do
+  case "$LINE" in
+  (begin+([[:space:]])+([^[:space:]])*([[:space:]]))
+    NAME="${LINE##begin+([[:space:]])}"
+    NAME="${NAME%%*([[:space:]])}"
+    PREPEND="$PREPEND$NAME " ;;
+  (end+([[:space:]])+([^[:space:]])*([[:space:]]))
+    PREPEND="${PREPEND%%+([^[:space:]]) }" ;;
+  (*) NLINE="$PREPEND$LINE"
+      if [[ "$NLINE" == $search\ * ]] ; then
+        OUTPUT="$OUTPUT${NLINE#$search }
+"
+      fi ;;
+  esac
+done
+IFS="$IFSBCK"
+
+if [ $column = yes ] ; then
+  for ITEM in $OUTPUT ; do
+    echo "$ITEM"
+  done
+else
+  echo -n "$OUTPUT"
+fi
+
+exit
+
+# old versions follow ...
+
+test $# -ne 1 && exit 1
+
+option=$1
+
+tmp="$( sed "s/^/>/
+     /^>begin *$option *$/,/^>end *$option *$/{
+     /^>begin *$option *$/!{
+     /^>end *$option *$/!{
+     s/^>/+/
+     }
+     }
+     }
+     s/^>$option /+/" |
+sed -n "s/^+//p" )"
+
+
+
+#tmp="$(sed "/^begin *$option *$/,/^end *$option *$/{
+#     /^begin *$option *$/!{
+#     /^end *$option *$/!{
+#     s/^/$option /
+#     }
+#     }
+#     }" |
+#sed -n "s/^$option //p" )"
+
+# auxiliary version
+#tmp="`awk "BEGIN { p=0 }    
+#           /^$option */ {print}
+#           /^begin *$option *$/ { p=1 } 
+#           /^end *$option *$/ { p=0 }
+#           { if ( p == 1 ) print }"  |
+#           egrep -v "^begin *option *$" |
+#           sed -n "s/^$option //p" `"
+
+test $column = yes &&
+tmp="`echo $tmp | tr " " "\n" | grep -v "^ *$" `"
+
+echo "$tmp" 
+

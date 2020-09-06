@@ -1,0 +1,79 @@
+This example shows how to use ph.x on a GRID. The GRID phonon parallelization
+allows to split a phonon calculation into relatively small jobs, each
+runing a subset of linear-response calculations for a small number of
+wave-vectors or irreps or compbinations. The jobs can then be run
+independently and the final results collected. Documentation is available
+here: "Calculation of Phonon Dispersions on the GRID using Quantum ESPRESSO",
+R. di Meo, A. Dal Corso, P. Giannozzi, and S. Cozzini, in
+"Chemistry and Material Science Applications on Grid Infrastructures", Editors:
+S. Cozzini, A. Lagana', ICTP Lecture Notes Series, Vol.24, pp.165-183 (2009)
+http://users.ictp.it/~pub_off/lectures/lns024/10-giannozzi/10-giannozzi.pdf
+
+The calculation is the same as example06. In run_example all q-vectors and
+all irreps are split into different runs. In run_example_1 all q-vectors are 
+split into different runs.
+
+The calculation in run_example proceeds as follows:
+
+1) A self consistent calculation is done:
+(input alas.scf.in, output alas.scf.out)
+
+2) A preparatory phonon run with start_irr=0, last_irr=0 calculates the
+displacement patterns:
+(input alas.ph.in0, output alas.ph.out0)
+
+3) ph.x is run for each representation of each q point. 
+The code runs with different outdir and only the xml files are copied 
+in the same outdir
+(input input.#q.#irr, output output.#q.#irr)
+
+4) A final phonon calculation collects all the dynamical matrices
+ (input alas.ph.in, output alas.ph.out)
+
+5) q2r and matdyn compute the interatomic force constants and the dispersions.
+
+The calculation in run_example_1 proceeds as follows:
+
+1) A self consistent calculation is done:
+(input alas.scf.in, output alas.scf.out)
+
+2) ph.x is run for each q point. 
+The code runs with different outdir. This step can be done in different
+machines or different processors. 
+(input input.#q, output output.#q)
+
+3) q2r and matdyn compute the interatomic force constants and the dispersions.
+
+The calculation in run_example_3 is a variation of run_example
+in which all the bands are calculated first and then the band files are
+copied in the outdir directories or each ph.x run.
+At variance with run_example it does not recalculate the
+initialization (bands and electric field) for each irreducible 
+representation. Each different q must be run in a different directory 
+using lqdir=.true. 
+Note that the script runs in a different outdir directory for each q and irrep.
+This simulates the use of separate machines, but if you run on many CPUs
+that share the same disk you can avoid copying the files using the same 
+outdir directory for all q and irrep. 
+
+The run is as follows:
+
+1) A self consistent calculation is done:
+(input alas.scf.in, output alas.scf.out)
+
+2) A preparatory phonon run with lqdir=.true. and only_wfc=.true. calculates 
+the displacement patterns and the bands.
+(input alas.ph.wfc.in, output alas.ph.wfc.out)
+Note that the scf calculation and this band calculation can be done
+with the option twfcollect=.true. (that needs to be set only in the pw.x
+input) with a number of processors different from the following phonon run.
+
+3) The dielectric constant, effective charges and the part of the dynamical
+matrix not dependent on the perturbation can be calculated in a
+second initialization run using lqdir=.true. and only_init=.true..
+This step can be skipped but in this case all representations corresponding
+to q=0 will calculate the electric field part.
+(input alas.ph.in0, output alas.ph.out0)
+
+3-5) The rest is as in run_example (Note however that lqdir=.true. must
+be used in all phonon inputs).

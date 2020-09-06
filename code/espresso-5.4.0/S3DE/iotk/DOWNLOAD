@@ -1,0 +1,17 @@
+RELEASE POLICY
+Version number is major.minor.patch
+Major number will be increased if/when a strong redesign of the library will be necessary.
+Minor number is increased when new features are added.
+Patch number is increased with bug fixes.
+For a given major.minor branch, the latest release (i.e. highest patch number) is the most reliable.
+
+DOWNLOADS.
+- iotk1.0.1.tar.gz
+
+DISCLAIMER. While the developers of IOTK make every effort to deliver a high quality scientific software, we do not guarantee that our codes are free from defects. Our software is provided "as is". Users are solely responsible for determining the appropriateness of using this package and assume all risks associated with the use of it, including but not limited to the risks of program errors, damage to or loss of data, programs or equipment, and unavailability or interruption of operations. Due to the limited human resources involved in the development of this software package, no support will be given to individual users for either installation or execution of the codes.
+Finally, in the spirit of every open source project, any contribution from external users is welcome, encouraged and, if appropriate, will be included in future releses.
+
+LICENCE. All the material included in this distribution is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+These programs are distributed in the hope that they will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

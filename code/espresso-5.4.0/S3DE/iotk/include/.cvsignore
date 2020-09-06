@@ -1,0 +1,6 @@
+iotk_config.h
+iotk_version.h
+iotk_version.sh
+iotk_auxmacros.h
+*.ad
+

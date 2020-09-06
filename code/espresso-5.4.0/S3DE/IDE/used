@@ -1,0 +1,73 @@
+#! /bin/bash 
+
+MANUAL="\
+ returns list of used libraries
+ used [-r] [-s] [-i] [DIR] 
+ -r) acts recursively, eliminating duplicated names
+ -s) like -r, but also order by number of inclusions.
+     this is the correct compilation order.
+ -i) takes from stdin the OPTION file directly
+"
+
+recursive=
+sort=
+interactive=
+directory=
+level=0
+
+while getopts :rsid:n: OPT
+do
+   case $OPT in
+   (h)  echo "$MANUAL" ; exit 0 ;;
+   (r)  recursive=yes ;;
+   (s)  recursive=yes ; sort=yes ;;
+   (i)  interactive=yes ;;
+   (d)  directory=$OPTARG ;;
+   (n)  level=$OPTARG ;;
+   (:)  echo "error: $OPTARG requires an argument" ; exit 1 ;;
+   (?)  echo "error: unkwown option $OPTARG" ; exit 1 ;;
+   esac
+done
+
+if [ $level -gt 40 ] ; then
+    echo "Probable recursion" 1>&2
+    exit 1
+fi
+
+# se c'e' un uso ricorsivo si pianta
+newlevel=`expr $level + 1`
+
+if [ -z "$interactive" ] ; then
+
+    test -d $directory || exit 1
+    test -r $directory/OPTIONS && 
+       list="$(IDE/getoption -c USE < $directory/OPTIONS)"
+else
+   stdin=$(cat)
+   list="$(echo "$stdin" |  IDE/getoption -c USE)"
+fi
+
+if [ "$recursive" ] ; then
+  glist=""
+  for element in $list
+  do
+    glist="$glist
+$element
+`IDE/used -r -d $element -n $newlevel`"
+  done
+  output="`echo "$glist" | grep -v "^$" | sort | uniq`"
+  if [ -n "$sort" ] ; then
+    newoutput=""
+    for element in $output
+    do
+      newoutput="$newoutput`IDE/used -r -d $element | wc -l` $element
+"
+    done
+    output="`echo "$newoutput" | grep -v "^$" | sort -n | sed 's/^ *[0-9]* *//'`"
+  fi
+  test "$output" && echo "$output"
+else
+  test "$list" && echo "$list"
+fi
+
+

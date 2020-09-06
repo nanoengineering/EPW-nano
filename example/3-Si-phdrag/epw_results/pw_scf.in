@@ -1,0 +1,36 @@
+&CONTROL
+ prefix = 'Si'
+ calculation = 'scf'
+ restart_mode = 'from_scratch'
+ tstress = .true.
+ tprnfor = .true.
+ outdir = 'output'
+ pseudo_dir = '/home/~/work/search/EPW-example/Si/pseudo'
+ verbosity = 'high'
+/
+&SYSTEM
+ ibrav = 2
+ celldm(1) = 10.18228
+ nat = 2
+ ntyp = 1
+ nbnd = 24
+ ecutwfc = 80.0
+ occupations = 'fixed'
+ smearing='gauss'
+ degauss = 0.01
+/
+&ELECTRONS
+ electron_maxstep = 150
+ conv_thr = 1.0D-12
+ mixing_beta = 0.65
+ mixing_mode = 'plain'
+ mixing_ndim = 24
+ diagonalization = 'cg'
+/
+ATOMIC_SPECIES
+  Si 28.0855 Si.pz-n-nc.UPF
+ATOMIC_POSITIONS crystal
+ Si 0.000000000 0.000000000 0.000000000
+ Si 0.250000000 0.250000000 0.250000000
+K_POINTS automatic
+ 12 12 12 0 0 0

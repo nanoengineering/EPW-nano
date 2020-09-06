@@ -1,0 +1,29 @@
+#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"
+
+set basedir   [file normalize [file dirname [info script]]]
+set sourcedir [file join $basedir helpdoc.d]
+
+source [file join $sourcedir helpdoc.tcl]
+
+#
+# MAIN
+#
+
+if { $argc < 1 } {
+    puts stderr "\nUsage: $argv0 file1.def ?file2.def? ...\n"
+    exit 1
+}
+
+# custom ROBODOC program
+#set ::helpdoc::robodoc /path/to/robodoc
+
+
+# custom XSLTPROC program
+#set ::helpdoc::xsltproc /path/to/xsltproc
+
+
+# MAKE-IT-ALL
+
+::helpdoc::process $argv
