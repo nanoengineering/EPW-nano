@@ -1,6 +1,6 @@
 # EPW-nano
 
-First-principles simulation of electron transport and thermoelectric property of materials including electron-phonon scattering, defect scattering, and phonon drag
+# First-principles simulation of electron transport and thermoelectric property of materials including electron-phonon scattering, defect scattering, and phonon drag
 
 Jiawei Zhou, Te-Huan Liu, Qichen Song, Qian Xu, Zhiwei Ding, Bolin Liao, and Gang Chen
 
@@ -8,7 +8,7 @@ Department of Mechanical Engineering
 Massachusetts Institute of Technology
 Cambridge, MA 02139 
 
-Disclaimer:
+# Disclaimer:
 
 This EPW code is a modified version of the EPW v4 code from the open-source Quantum ESPRESSO suite (based on QE 5.4.0), and is released under GNU General Public License (v2). The source codes are published both at Materials Cloud (DOI: to be published) and GitHub (for comments and questions). The original EPW v4 is developed by S. Poncé, E.R. Margine, C. Verdi, and, F. Giustino, initially released inside Quantum ESPRESSO in 2016. This modified version is dedicated to the simulation of electron-phonon transport properties in quantum materials. Specifically, it calculates the electron-phonon and electron-defect scattering rates and uses them as inputs in Boltzmann transport equation to obtain transport properties (e.g. electrical conductivity, mobility, Seebeck coefficient, thermoelectric power factor, and electronic thermal conductivity).
 
